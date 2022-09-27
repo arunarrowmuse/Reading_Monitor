@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../constants.dart';
 import '../homescreen/switchscreen.dart';
 
@@ -19,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _password = TextEditingController();
   bool session = false;
   bool isLoad = false;
+  List UserData = [];
 
   void loginUser(String email, String password, bool storesession) async {
     setState(() {
@@ -30,8 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
               r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
           .hasMatch(email)) {
         final response = await http.post(
-          Uri.parse(
-              '${Constants.weblink}' + Routes.LOGIN),
+          Uri.parse('${Constants.weblink}' + Routes.LOGIN),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -40,34 +39,53 @@ class _LoginScreenState extends State<LoginScreen> {
             'password': password,
           }),
         );
-        if (response.statusCode == 200) {
+        print(response.statusCode);
+        if (response.statusCode == 200 || response.statusCode == 201) {
           var data = jsonDecode(response.body);
           print(data);
-          if (storesession == true) {
-            int userid = data['user']['id'];
-            String token = data['token'];
-            String name = data['user']['name'];
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            prefs.setInt('userid', userid);
-            prefs.setString('token', token);
-            prefs.setString('name', name);
-            // print("SavedData");
-            // print(prefs.getString("token"));
-            // print(prefs.getInt("userid"));
-
+          if (data['message'] == "Bad creds") {
+            Constants.showtoast("Invalid Email or Password!");
+            setState(() {
+              isLoad = false;
+            });
           } else {
-            // todo do not store data to the shared preferences
-            print("do not store data");
+            if (storesession == true) {
+              int userid = data['user']['id'];
+              String token = data['token'];
+              String name = data['user']['firstname'];
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.setInt('userid', userid);
+              prefs.setString('token', token);
+              prefs.setString('name', name);
+              prefs.getString("UserList");
+
+              if (prefs.getString("UserList") == null) {
+                prefs.setString("UserList",
+                    jsonEncode([{"UserID": "$userid", "token": token, "name": name}]));
+              } else {
+                String? data = prefs.getString("UserList");
+                List DecodeUser = jsonDecode(data!);
+                DecodeUser.add({"UserID": "$userid", "token": token, "name": name});
+                prefs.setString("UserList", jsonEncode(DecodeUser));
+                }
+            } else {
+              String token = data['token'];
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.setString('token', token);
+              print("do not store data");
+            }
+            setState(() {
+              isLoad = false;
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => Switcher(values: 0)));
+            });
           }
-          setState(() {
-            isLoad = false;
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => Switcher(values: 0)));
-          });
         } else {
           setState(() {
             isLoad = false;
           });
+          print(response.statusCode);
+          print(response.body);
           Constants.showtoast("Invalid Email or Password!");
         }
       } else {

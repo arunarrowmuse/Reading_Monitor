@@ -26,10 +26,12 @@ class _UtilityDetailState extends State<UtilityDetail> {
   bool isLoad = false;
   var data;
   List filterdata = [];
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
     FetchSubMachineList();
   }
@@ -39,26 +41,27 @@ class _UtilityDetailState extends State<UtilityDetail> {
     setState(() {
       isLoad = true;
     });
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}ucslist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
       data = jsonDecode(response.body);
       for (int i = 0; i < data.length; i++) {
-        if (widget.id.toString() == data[i]['categories_id'].toString()) {
+        if (widget.id.toString() ==
+            data[i]['uitility_categories_id'].toString()) {
           filterdata.add(data[i]);
         }
       }
-      print(filterdata);
       setState(() {
         isLoad = false;
       });
     } else {
-      print(response.statusCode);
-      print(response.body);
       setState(() {
         isLoad = false;
       });
@@ -68,42 +71,43 @@ class _UtilityDetailState extends State<UtilityDetail> {
 
   void AddSubMachineList() async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}ucsadd'),
+      Uri.parse('${Constants.weblink}UtiltiSubCategoriesAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "categories_id": widget.id,
-        "machine": name.text,
+        "uitility_categories_id": widget.id,
+        "uilitysubc_name": name.text,
         "average": avg.text,
-        "deviation_allowed": dev.text
+        "deviation": dev.text
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
       name.clear();
       avg.clear();
       dev.clear();
       FetchSubMachineList();
     } else {
-      print(response.statusCode);
-      print(response.body);
       Constants.showtoast("Error Fetching Data.");
     }
   }
 
   void UpdateSubMachineList(String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}ucsupdate'),
+      Uri.parse('${Constants.weblink}UtiltiSubCategoriesUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": name.text,
+        '_method': "PUT",
+        "uilitysubc_name": name.text,
         "average": avg.text,
-        "deviation_allowed": dev.text,
-        "id": id,
+        "deviation": dev.text,
+        // "uitility_categories_id": id,
       }),
     );
     if (response.statusCode == 200) {
@@ -114,18 +118,18 @@ class _UtilityDetailState extends State<UtilityDetail> {
       dev.clear();
       FetchSubMachineList();
     } else {
-      print(response.statusCode);
-      print(response.body);
       Constants.showtoast("Error Updating Data.");
     }
   }
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}ucsdelete/$id'),
+      Uri.parse('${Constants.weblink}UtiltiSubCategoriesDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       Constants.showtoast("Machine Deleted!");
@@ -167,7 +171,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                     ),
                     onTap: () async {
                       SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
+                          await SharedPreferences.getInstance();
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const AddUser(),
@@ -188,7 +192,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                     ),
                     onTap: () async {
                       SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
+                          await SharedPreferences.getInstance();
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const SwitchUser(),
@@ -209,7 +213,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                     ),
                     onTap: () async {
                       SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
+                          await SharedPreferences.getInstance();
                       prefs.setInt('userid', 0);
                       prefs.setString('token', "");
                       prefs.setString("name", "");
@@ -237,8 +241,6 @@ class _UtilityDetailState extends State<UtilityDetail> {
             return GestureDetector(
               onTap: () {
                 Navigator.pop(context);
-                // Scaffold.of(context).openDrawer();
-                // print("object");
               },
               child: Container(
                 height: double.infinity,
@@ -284,8 +286,8 @@ class _UtilityDetailState extends State<UtilityDetail> {
                             },
                             style: ButtonStyle(
                                 backgroundColor:
-                                MaterialStateProperty.all<Color>(
-                                    Constants.primaryColor)),
+                                    MaterialStateProperty.all<Color>(
+                                        Constants.primaryColor)),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -311,7 +313,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                 height: 5,
               ),
               (isLoad == true)
-                  ? SizedBox(
+                  ? Container(
                 height: 500,
                 child: Center(
                   child: CircularProgressIndicator(
@@ -319,130 +321,144 @@ class _UtilityDetailState extends State<UtilityDetail> {
                   ),
                 ),
               )
+                  : (filterdata.length == 0)
+                  ? Container(
+                height: 300,
+                child: Center(
+                  child: Text(
+                    "no machines found",
+                    style: TextStyle(
+                        fontFamily: Constants.popins,
+                        color: Constants.textColor,
+                        // fontWeight: FontWeight.w600,
+                        fontSize: 15),
+                  ),
+                ),
+              )
                   : Expanded(
-                child: ListView.builder(
-                    itemCount: filterdata.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.all(
-                                Radius.circular(15.0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 3,
-                                offset: const Offset(
-                                    0, 3), // changes position of shadow
+                      child: ListView.builder(
+                          itemCount: filterdata.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(15.0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 2,
+                                      blurRadius: 3,
+                                      offset: const Offset(
+                                          0, 3), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      // crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          filterdata[index]['uilitysubc_name'],
+                                          style: TextStyle(
+                                              fontFamily: Constants.popins,
+                                              color: Constants.textColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15),
+                                        ),
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                                onPressed: () {
+                                                  name.text = filterdata[index]
+                                                      ['uilitysubc_name'];
+                                                  avg.text = filterdata[index]
+                                                          ['average']
+                                                      .toString();
+                                                  dev.text = filterdata[index]
+                                                          ['deviation']
+                                                      .toString();
+                                                  updateData(
+                                                      context,
+                                                      filterdata[index]['id']
+                                                          .toString());
+                                                },
+                                                icon: const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.green,
+                                                  size: 20,
+                                                )),
+                                            IconButton(
+                                                onPressed: () {
+                                                  _deleteMachineDialog(context,
+                                                      filterdata[index]['id']);
+                                                },
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                )),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "Average",
+                                          style: TextStyle(
+                                              fontFamily: Constants.popins,
+                                              fontSize: 12),
+                                        ),
+                                        Text(
+                                          filterdata[index]['average']
+                                              .toString(),
+                                          style: TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              fontFamily: Constants.popins,
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      // crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Deviation Allowed",
+                                          style: TextStyle(
+                                              fontFamily: Constants.popins,
+                                              fontSize: 12),
+                                        ),
+                                        Text(
+                                          filterdata[index]['deviation']
+                                              .toString(),
+                                          style: TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              fontFamily: Constants.popins,
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    // Container(color: Colors.blue,width: w,height: 1,),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 15),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                // crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    filterdata[index]['machine'],
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15),
-                                  ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                          onPressed: () {
-                                            name.text = filterdata[index]
-                                            ['machine'];
-                                            avg.text = filterdata[index]
-                                            ['average']
-                                                .toString();
-                                            dev.text = filterdata[index]
-                                            ['deviation_allowed']
-                                                .toString();
-                                            updateData(
-                                                context,
-                                                filterdata[index]['id']
-                                                    .toString());
-                                          },
-                                          icon: const Icon(
-                                            Icons.edit,
-                                            color: Colors.green,
-                                            size: 20,
-                                          )),
-                                      IconButton(
-                                          onPressed: () {
-                                            _deleteMachineDialog(context,
-                                                filterdata[index]['id']);
-                                          },
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                            size: 20,
-                                          )),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Average",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        fontSize: 12),
-                                  ),
-                                  Text(
-                                    filterdata[index]['average']
-                                        .toString(),
-                                    style: TextStyle(
-                                        decoration:
-                                        TextDecoration.underline,
-                                        fontFamily: Constants.popins,
-                                        fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                // crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Deviation Allowed",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        fontSize: 12),
-                                  ),
-                                  Text(
-                                    filterdata[index]['deviation_allowed']
-                                        .toString(),
-                                    style: TextStyle(
-                                        decoration:
-                                        TextDecoration.underline,
-                                        fontFamily: Constants.popins,
-                                        fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                              // Container(color: Colors.blue,width: w,height: 1,),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-              ),
+                            );
+                          }),
+                    ),
             ],
           ),
         ));
@@ -531,6 +547,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                           // width: w * 0.25,
                           child: TextFormField(
                             controller: avg,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Average is required.';
@@ -578,6 +595,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                           height: 60,
                           child: TextFormField(
                             controller: dev,
+                              keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Unit is required.';
@@ -752,6 +770,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                           // width: w * 0.25,
                           child: TextFormField(
                             controller: avg,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Average is required.';
@@ -798,6 +817,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                         SizedBox(
                           height: 60,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             controller: dev,
                             validator: (value) {
                               if (value == null || value.isEmpty)
@@ -875,7 +895,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                         size: 14,
                       ),
                       Text(
-                        "Add",
+                        "Update",
                         style: TextStyle(
                           // color: Colors.white,
                           fontSize: 14,
@@ -923,7 +943,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                         fontFamily: Constants.popins,
                       )),
                       backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white)),
+                          MaterialStateProperty.all<Color>(Colors.white)),
                   child: Text(
                     "Cancel",
                     style: TextStyle(
@@ -949,7 +969,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
                         fontFamily: Constants.popins,
                       )),
                       backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.red)),
+                          MaterialStateProperty.all<Color>(Colors.red)),
                   child: Text(
                     "Delete",
                     style: TextStyle(

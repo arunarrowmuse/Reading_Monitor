@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class FlueGasList extends StatefulWidget {
@@ -81,18 +82,21 @@ class FlueSteamBoiler extends StatefulWidget {
   State<FlueSteamBoiler> createState() => _FlueSteamBoilerState();
 }
 
-class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
-  TextEditingController name = TextEditingController();
-  TextEditingController value = TextEditingController();
-  TextEditingController temp = TextEditingController();
-  TextEditingController valueprcnt = TextEditingController();
-  TextEditingController tempprcnt = TextEditingController();
+class _FlueSteamBoilerState extends State<FlueSteamBoiler>
+    with AutomaticKeepAliveClientMixin<FlueSteamBoiler> {
+  TextEditingController nameController = TextEditingController();
+  TextEditingController valueController = TextEditingController();
+  TextEditingController tempController = TextEditingController();
+  TextEditingController valueprcntController = TextEditingController();
+  TextEditingController tempprcntController = TextEditingController();
   var data;
   bool isLoad = false;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
     fetchSteamMachineList();
   }
@@ -101,11 +105,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}fgsblist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetFlueGasSteamBolierListingData/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
@@ -130,21 +136,26 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
     String temperature_deviation,
   ) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgsbadd'),
+      Uri.parse('${Constants.weblink}GetFlueGasSteamBolierListingDataAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
+        "machine_name": machine,
         "value": value.toString(),
-        "value_deviation": value_deviation.toString(),
+        "deviation": value_deviation.toString(),
         "temperature": temperature.toString(),
         "temperature_deviation": temperature_deviation.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
+      nameController.clear();
+      valueController.clear();
+      tempController.clear();
+      valueprcntController.clear();
+      tempprcntController.clear();
       Constants.showtoast("Machine Added!");
       fetchSteamMachineList();
       // setState(() {
@@ -166,22 +177,28 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
       String temperature_deviation,
       String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgsbupdate'),
+      Uri.parse(
+          '${Constants.weblink}GetFlueGasSteamBolierListingDataUpdated/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
+        '_method': "PUT",
+        "machine_name": machine,
         "value": value.toString(),
-        "value_deviation": value_deviation.toString(),
+        "deviation": value_deviation.toString(),
         "temperature": temperature.toString(),
         "temperature_deviation": temperature_deviation.toString(),
-        "id": id.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
+      nameController.clear();
+      valueController.clear();
+      tempController.clear();
+      valueprcntController.clear();
+      tempprcntController.clear();
       Constants.showtoast("Machine Updated!");
       fetchSteamMachineList();
       // setState(() {
@@ -194,10 +211,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgsbdelete/$id'),
+      Uri.parse(
+          '${Constants.weblink}GetFlueGasSteamBolierListingDataDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       data = jsonDecode(response.body);
@@ -219,286 +239,326 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => fetchSteamMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? SizedBox(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? SizedBox(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data[index]['machine'],
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                name.text =
-                                                    data[index]['machine'];
-                                                value.text = data[index]
-                                                        ['value']
-                                                    .toString();
-                                                valueprcnt.text = data[index]
-                                                        ['value_deviation']
-                                                    .toString();
-                                                temp.text = data[index]
-                                                        ['temperature']
-                                                    .toString();
-                                                tempprcnt.text = data[index][
-                                                        'temperature_deviation']
-                                                    .toString();
-                                              });
-                                              _updateTextInputDialog(context,
-                                                  data[index]['id'].toString());
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Colors.green,
-                                              size: 20,
-                                            )),
-                                        IconButton(
-                                            onPressed: () {
-                                              _deleteMachineDialog(
-                                                  context, data[index]['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 20,
-                                            )),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Value",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['value']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Temp",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['temperature']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        )),
-                                    Container(
-                                      color: Constants.secondaryColor
-                                          .withOpacity(0.2),
-                                      width: 1,
-                                      height: h / 15,
-                                    ),
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Value %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['value_deviation']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Temp %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index][
-                                                          'temperature_deviation']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        )),
-                                  ],
-                                )
-                              ],
+                    )
+                  : (data.length == 0)
+                      ? SizedBox(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              // final item = titles[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5, horizontal: 15),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            data[index]['machine_name']
+                                                .toString(),
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                color: Constants.textColor,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      nameController.text =
+                                                          data[index]
+                                                              ['machine_name'];
+                                                      valueController.text =
+                                                          data[index]['value']
+                                                              .toString();
+                                                      valueprcntController
+                                                          .text = data[index]
+                                                              ['deviation']
+                                                          .toString();
+                                                      tempController
+                                                          .text = data[index]
+                                                              ['temperature']
+                                                          .toString();
+                                                      tempprcntController
+                                                          .text = data[index][
+                                                              'temperature_deviation']
+                                                          .toString();
+                                                    });
+                                                    _updateTextInputDialog(
+                                                        context,
+                                                        data[index]['id']
+                                                            .toString());
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(
+                                                        context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  )),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          SizedBox(
+                                              width: w / 3,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Value",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]['value']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Temp",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]
+                                                                ['temperature']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )),
+                                          Container(
+                                            color: Constants.secondaryColor
+                                                .withOpacity(0.2),
+                                            width: 1,
+                                            height: h / 15,
+                                          ),
+                                          SizedBox(
+                                              width: w / 3,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Value %",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]['deviation']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Temp %",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index][
+                                                                'temperature_deviation']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
     );
@@ -542,7 +602,7 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                               return 'Name is required.';
                             return null;
                           },
-                          controller: name,
+                          controller: nameController,
                           style: TextStyle(
                             fontFamily: Constants.popins,
                             // color: Constants.textColor,
@@ -587,12 +647,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value is required.';
                                 return null;
                               },
-                              controller: value,
+                              controller: valueController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -635,12 +696,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value % is required.';
                                 return null;
                               },
-                              controller: valueprcnt,
+                              controller: valueprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -689,12 +751,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature is required.';
                                 return null;
                               },
-                              controller: temp,
+                              controller: tempController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -737,12 +800,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature % is required.';
                                 return null;
                               },
-                              controller: tempprcnt,
+                              controller: tempprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -797,8 +861,12 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                       if (_key.currentState!.validate()) {
                         _key.currentState!.save();
                         Navigator.pop(context);
-                        AddSteamMachineList(name.text, value.text,
-                            valueprcnt.text, temp.text, tempprcnt.text);
+                        AddSteamMachineList(
+                            nameController.text,
+                            valueController.text,
+                            valueprcntController.text,
+                            tempController.text,
+                            tempprcntController.text);
                       }
                       // Navigator.pop(context);
                       // _textFieldController.clear();
@@ -874,7 +942,7 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                               return 'Name is required.';
                             return null;
                           },
-                          controller: name,
+                          controller: nameController,
                           style: TextStyle(
                             fontFamily: Constants.popins,
                             // color: Constants.textColor,
@@ -919,12 +987,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value is required.';
                                 return null;
                               },
-                              controller: value,
+                              controller: valueController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -967,12 +1036,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value % is required.';
                                 return null;
                               },
-                              controller: valueprcnt,
+                              controller: valueprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1021,12 +1091,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature is required.';
                                 return null;
                               },
-                              controller: temp,
+                              controller: tempController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1069,12 +1140,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature % is required.';
                                 return null;
                               },
-                              controller: tempprcnt,
+                              controller: tempprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1129,8 +1201,13 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
                       if (_key.currentState!.validate()) {
                         _key.currentState!.save();
                         Navigator.pop(context);
-                        UpdateSteamMachineList(name.text, value.text,
-                            valueprcnt.text, temp.text, tempprcnt.text, id);
+                        UpdateSteamMachineList(
+                            nameController.text,
+                            valueController.text,
+                            valueprcntController.text,
+                            tempController.text,
+                            tempprcntController.text,
+                            id);
                       }
                     });
                   },
@@ -1238,6 +1315,9 @@ class _FlueSteamBoilerState extends State<FlueSteamBoiler> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class FlueThermoPack extends StatefulWidget {
@@ -1247,18 +1327,21 @@ class FlueThermoPack extends StatefulWidget {
   State<FlueThermoPack> createState() => _FlueThermoPackState();
 }
 
-class _FlueThermoPackState extends State<FlueThermoPack> {
-  TextEditingController name = TextEditingController();
-  TextEditingController value = TextEditingController();
-  TextEditingController temp = TextEditingController();
-  TextEditingController valueprcnt = TextEditingController();
-  TextEditingController tempprcnt = TextEditingController();
+class _FlueThermoPackState extends State<FlueThermoPack>
+    with AutomaticKeepAliveClientMixin<FlueThermoPack> {
+  TextEditingController nameController = TextEditingController();
+  TextEditingController valueController = TextEditingController();
+  TextEditingController tempController = TextEditingController();
+  TextEditingController valueprcntController = TextEditingController();
+  TextEditingController tempprcntController = TextEditingController();
   var data;
   bool isLoad = false;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
     fetchThermoMachineList();
   }
@@ -1267,11 +1350,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}fgtplist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingData/'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
@@ -1289,28 +1374,33 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
   }
 
   void AddThermoMachineList(
-      String machine,
-      String value,
-      String value_deviation,
-      String temperature,
-      String temperature_deviation,
-      ) async {
+    String machine,
+    String value,
+    String value_deviation,
+    String temperature,
+    String temperature_deviation,
+  ) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgthadd'),
+      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingDataAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
+        "machine_name": machine,
         "value": value.toString(),
-        "value_deviation": value_deviation.toString(),
+        "deviation": value_deviation.toString(),
         "temperature": temperature.toString(),
         "temperature_deviation": temperature_deviation.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
+      nameController.clear();
+      valueController.clear();
+      tempController.clear();
+      valueprcntController.clear();
+      tempprcntController.clear();
       Constants.showtoast("Machine Added!");
       fetchThermoMachineList();
       // setState(() {
@@ -1333,23 +1423,29 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
       String temperature_deviation,
       String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgtpupdate'),
+      Uri.parse(
+          '${Constants.weblink}GetFlueGasThermoPackListingDataUpdated/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "uid": uid,
-        "machine": machine,
+        '_method': "PUT",
+        "machine_name": machine,
         "value": value.toString(),
-        "value_deviation": value_deviation.toString(),
+        "deviation": value_deviation.toString(),
         "temperature": temperature.toString(),
         "temperature_deviation": temperature_deviation.toString(),
-        "id": id.toString(),
+        // "id": id.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
+      nameController.clear();
+      valueController.clear();
+      tempController.clear();
+      valueprcntController.clear();
+      tempprcntController.clear();
       Constants.showtoast("Machine Updated!");
       fetchThermoMachineList();
       // setState(() {
@@ -1364,10 +1460,12 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}fgtpdelete/$id'),
+      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       data = jsonDecode(response.body);
@@ -1384,290 +1482,334 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
       Constants.showtoast("Error Fetching Data.");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => fetchThermoMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? SizedBox(
-              height: 500,
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: Constants.primaryColor,
-                ),
+                ],
               ),
-            )
-                : Expanded(
-              child: ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, index) {
-                  // final item = titles[index];
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                        const BorderRadius.all(Radius.circular(15.0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 3,
-                            offset: const Offset(
-                                0, 3), // changes position of shadow
-                          ),
-                        ],
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 5, horizontal: 15),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                            // crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                data[index]['machine'],
-                                style: TextStyle(
-                                    fontFamily: Constants.popins,
-                                    color: Constants.textColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15),
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          name.text =
-                                          data[index]['machine'];
-                                          value.text = data[index]
-                                          ['value']
-                                              .toString();
-                                          valueprcnt.text = data[index]
-                                          ['value_deviation']
-                                              .toString();
-                                          temp.text = data[index]
-                                          ['temperature']
-                                              .toString();
-                                          tempprcnt.text = data[index][
-                                          'temperature_deviation']
-                                              .toString();
-                                        });
-                                        _updateTextInputDialog(context,
-                                            data[index]['id'].toString(),data[index]['uid'].toString());
-                                      },
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.green,
-                                        size: 20,
-                                      )),
-                                  IconButton(
-                                      onPressed: () {
-                                        _deleteMachineDialog(
-                                            context, data[index]['id']);
-                                      },
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                        size: 20,
-                                      )),
-                                ],
-                              ),
-                            ],
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
+                            ),
                           ),
-                          Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(
-                                  width: w / 3,
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              // final item = titles[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5, horizontal: 15),
                                   child: Column(
                                     children: [
                                       Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            "Value",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                // color: Constants.textColor,
-                                                fontWeight:
-                                                FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
-                                          Text(
-                                            data[index]['value']
+                                            data[index]['machine_name']
                                                 .toString(),
                                             style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                decoration: TextDecoration
-                                                    .underline,
-                                                // color: Constants.textColor,
-                                                // fontWeight: FontWeight.w600,
-                                                fontSize: 12),
+                                                fontFamily: Constants.popins,
+                                                color: Constants.textColor,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      nameController
+                                                          .text = data[index]
+                                                              ['machine_name']
+                                                          .toString();
+                                                      valueController.text =
+                                                          data[index]['value']
+                                                              .toString();
+                                                      valueprcntController
+                                                          .text = data[index]
+                                                              ['deviation']
+                                                          .toString();
+                                                      tempController
+                                                          .text = data[index]
+                                                              ['temperature']
+                                                          .toString();
+                                                      tempprcntController
+                                                          .text = data[index][
+                                                              'temperature_deviation']
+                                                          .toString();
+                                                    });
+                                                    _updateTextInputDialog(
+                                                        context,
+                                                        data[index]['id']
+                                                            .toString(),
+                                                        data[index]['uid']
+                                                            .toString());
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(
+                                                        context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  )),
+                                            ],
                                           ),
                                         ],
                                       ),
                                       Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "Temp",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                // color: Constants.textColor,
-                                                fontWeight:
-                                                FontWeight.w600,
-                                                fontSize: 12),
+                                          SizedBox(
+                                              width: w / 3,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Value",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]['value']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Temp",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]
+                                                                ['temperature']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )),
+                                          Container(
+                                            color: Constants.secondaryColor
+                                                .withOpacity(0.2),
+                                            width: 1,
+                                            height: h / 15,
                                           ),
-                                          Text(
-                                            data[index]['temperature']
-                                                .toString(),
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                decoration: TextDecoration
-                                                    .underline,
-                                                // color: Constants.textColor,
-                                                // fontWeight: FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
+                                          SizedBox(
+                                              width: w / 3,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Value %",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index]['deviation']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "Temp %",
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            // color: Constants.textColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                      Text(
+                                                        data[index][
+                                                                'temperature_deviation']
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontFamily:
+                                                                Constants
+                                                                    .popins,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline,
+                                                            // color: Constants.textColor,
+                                                            // fontWeight: FontWeight.w600,
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )),
                                         ],
-                                      ),
+                                      )
                                     ],
-                                  )),
-                              Container(
-                                color: Constants.secondaryColor
-                                    .withOpacity(0.2),
-                                width: 1,
-                                height: h / 15,
-                              ),
-                              SizedBox(
-                                  width: w / 3,
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Value %",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                // color: Constants.textColor,
-                                                fontWeight:
-                                                FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
-                                          Text(
-                                            data[index]['value_deviation']
-                                                .toString(),
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                decoration: TextDecoration
-                                                    .underline,
-                                                // color: Constants.textColor,
-                                                // fontWeight: FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
-                                        children: [
-                                          Text(
-                                            "Temp %",
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                // color: Constants.textColor,
-                                                fontWeight:
-                                                FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
-                                          Text(
-                                            data[index][
-                                            'temperature_deviation']
-                                                .toString(),
-                                            style: TextStyle(
-                                                fontFamily:
-                                                Constants.popins,
-                                                decoration: TextDecoration
-                                                    .underline,
-                                                // color: Constants.textColor,
-                                                // fontWeight: FontWeight.w600,
-                                                fontSize: 12),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            )
-          ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
     );
@@ -1711,7 +1853,7 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                               return 'Name is required.';
                             return null;
                           },
-                          controller: name,
+                          controller: nameController,
                           style: TextStyle(
                             fontFamily: Constants.popins,
                             // color: Constants.textColor,
@@ -1756,12 +1898,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value is required.';
                                 return null;
                               },
-                              controller: value,
+                              controller: valueController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1804,12 +1947,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value % is required.';
                                 return null;
                               },
-                              controller: valueprcnt,
+                              controller: valueprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1858,12 +2002,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature is required.';
                                 return null;
                               },
-                              controller: temp,
+                              controller: tempController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1906,12 +2051,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature % is required.';
                                 return null;
                               },
-                              controller: tempprcnt,
+                              controller: tempprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -1966,8 +2112,12 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                       if (_key.currentState!.validate()) {
                         _key.currentState!.save();
                         Navigator.pop(context);
-                        AddThermoMachineList(name.text, value.text,
-                            valueprcnt.text, temp.text, tempprcnt.text);
+                        AddThermoMachineList(
+                            nameController.text,
+                            valueController.text,
+                            valueprcntController.text,
+                            tempController.text,
+                            tempprcntController.text);
                       }
                       // Navigator.pop(context);
                       // _textFieldController.clear();
@@ -2005,7 +2155,8 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
         });
   }
 
-  Future<void> _updateTextInputDialog(BuildContext context, String id, String uid) async {
+  Future<void> _updateTextInputDialog(
+      BuildContext context, String id, String uid) async {
     final w = MediaQuery.of(context).size.width;
     final GlobalKey<FormState> _key = GlobalKey<FormState>();
     return showDialog(
@@ -2043,7 +2194,7 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                               return 'Name is required.';
                             return null;
                           },
-                          controller: name,
+                          controller: nameController,
                           style: TextStyle(
                             fontFamily: Constants.popins,
                             // color: Constants.textColor,
@@ -2088,12 +2239,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value is required.';
                                 return null;
                               },
-                              controller: value,
+                              controller: valueController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -2136,12 +2288,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Value % is required.';
                                 return null;
                               },
-                              controller: valueprcnt,
+                              controller: valueprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -2190,12 +2343,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature is required.';
                                 return null;
                               },
-                              controller: temp,
+                              controller: tempController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -2238,12 +2392,13 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                             height: 60,
                             width: w * 0.25,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty)
                                   return 'Temperature % is required.';
                                 return null;
                               },
-                              controller: tempprcnt,
+                              controller: tempprcntController,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
                                 // color: Constants.textColor,
@@ -2298,8 +2453,14 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                       if (_key.currentState!.validate()) {
                         _key.currentState!.save();
                         Navigator.pop(context);
-                        UpdateThermoMachineList(uid,name.text, value.text,
-                            valueprcnt.text, temp.text, tempprcnt.text, id);
+                        UpdateThermoMachineList(
+                            uid,
+                            nameController.text,
+                            valueController.text,
+                            valueprcntController.text,
+                            tempController.text,
+                            tempprcntController.text,
+                            id);
                       }
                     });
                   },
@@ -2366,7 +2527,7 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                         fontFamily: Constants.popins,
                       )),
                       backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white)),
+                          MaterialStateProperty.all<Color>(Colors.white)),
                   child: Text(
                     "Cancel",
                     style: TextStyle(
@@ -2392,7 +2553,7 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
                         fontFamily: Constants.popins,
                       )),
                       backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.red)),
+                          MaterialStateProperty.all<Color>(Colors.red)),
                   child: Text(
                     "Delete",
                     style: TextStyle(
@@ -2407,4 +2568,7 @@ class _FlueThermoPackState extends State<FlueThermoPack> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

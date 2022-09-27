@@ -19,7 +19,7 @@ class _ViewReportState extends State<ViewReport> {
         context: context,
         initialDate: selectedDate,
         firstDate: DateTime(2015, 8),
-        lastDate: DateTime.now());
+        lastDate: DateTime(2050, 1));
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
@@ -45,7 +45,7 @@ class _ViewReportState extends State<ViewReport> {
           color: Constants.secondaryColor,
           child: GestureDetector(
             onTap: () {
-              _selectDate(context);
+              // _selectDate(context);
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -70,11 +70,11 @@ class _ViewReportState extends State<ViewReport> {
                     ),
                   ),
                 ),
-                Container(
-                    padding: const EdgeInsets.all(8.0),
-                    height: 40,
-                    width: 40,
-                    child: Image.asset("assets/icons/down.png")),
+                // Container(
+                //     padding: const EdgeInsets.all(8.0),
+                //     height: 40,
+                //     width: 40,
+                //     child: Image.asset("assets/icons/down.png")),
                 // Icon(Icons.l, color: Colors.white,),
               ],
             ),

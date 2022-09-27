@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:readingmonitor/screens/MachineScreen/MachineList/utilityDetail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class UtilityList extends StatefulWidget {
@@ -11,10 +12,13 @@ class UtilityList extends StatefulWidget {
   State<UtilityList> createState() => _UtilityListState();
 }
 
-class _UtilityListState extends State<UtilityList> {
+class _UtilityListState extends State<UtilityList>
+    with AutomaticKeepAliveClientMixin<UtilityList> {
   TextEditingController name = TextEditingController();
   bool isLoad = false;
   var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -26,16 +30,18 @@ class _UtilityListState extends State<UtilityList> {
     setState(() {
       isLoad = true;
     });
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}muclist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetUtilityLisiting'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
-    if (response.statusCode == 200) {
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
       data = jsonDecode(response.body);
-      print("data------------------------------");
-      print(data);
       setState(() {
         isLoad = false;
       });
@@ -48,62 +54,61 @@ class _UtilityListState extends State<UtilityList> {
   }
 
   void AddUtilityMachineList() async {
-    print("1");
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mucadd'),
+      Uri.parse('${Constants.weblink}UtilityAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "categories": name.text,
+        "uitility_categories": name.text,
       }),
     );
-    print("2");
-    if (response.statusCode == 200) {
-      print("3");
+    if (response.statusCode == 200 || response.statusCode == 201) {
       data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
       name.clear();
       FetchUtilityMachineList();
     } else {
-      print("4");
-      print(response.statusCode);
-      print(response.body);
       Constants.showtoast("Error Fetching Data.");
     }
   }
 
   void UpdateMachinesMachineList(String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mucupdate'),
+      Uri.parse('${Constants.weblink}UtiliyUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "categories": name.text,
+        '_method': "PUT",
+        "uitility_categories": name.text,
         "id": id,
       }),
     );
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       data = jsonDecode(response.body);
       Constants.showtoast("Machine Updated!");
       name.clear();
       FetchUtilityMachineList();
     } else {
-      print(response.statusCode);
-      print(response.body);
       Constants.showtoast("Error Fetching Data.");
     }
   }
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mucdelete/$id'),
+      Uri.parse('${Constants.weblink}UtiliyDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': "DELETE"}),
     );
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 ||
+        response.statusCode == 201 ||
+        response.statusCode == 202) {
       Constants.showtoast("Machine Deleted!");
       FetchUtilityMachineList();
     } else {
@@ -113,129 +118,162 @@ class _UtilityListState extends State<UtilityList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Machine",
-                  style: TextStyle(
-                    // color: Colors.white,
-                    fontSize: 25,
-                    fontFamily: Constants.popinsbold,
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => FetchUtilityMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Machine",
+                    style: TextStyle(
+                      // color: Colors.white,
+                      fontSize: 25,
+                      fontFamily: Constants.popinsbold,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        name.clear();
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          name.clear();
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? SizedBox(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                        itemCount: data.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Card(
-                            elevation: 0.5,
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => UtilityDetail(
-                                            name: data[index]['categories'],
-                                            id: data[index]['id'].toString())));
-                              },
-                              child: ListTile(
-                                  leading: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: Constants.secondaryColor,
-                                    child: Text(
-                                      (index + 1).toString(),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: Constants.popins,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(data[index]['categories']),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              name.text =
-                                                  data[index]['categories'];
-                                              updatemachine(context,
-                                                  data[index]['id'].toString());
-                                            },
-                                            icon: Icon(Icons.edit),
-                                            color: Colors.green,
-                                          ),
-                                          SizedBox(width: 20),
-                                          IconButton(
-                                            onPressed: () {
-                                              _deleteMachineDialog(
-                                                  context, data[index]['id']);
-                                            },
-                                            icon: Icon(Icons.delete),
-                                            color: Colors.red,
-                                          ),
-                                        ],
-                                      )
-                                    ],
-                                  )),
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
-                          );
-                        }),
-                  ),
-          ],
+                          ),
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                              itemCount: data.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return Card(
+                                  elevation: 0.5,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  UtilityDetail(
+                                                      name: data[index][
+                                                          'uitility_categories'],
+                                                      id: data[index]['id']
+                                                          .toString())));
+                                    },
+                                    child: ListTile(
+                                        leading: CircleAvatar(
+                                          radius: 14,
+                                          backgroundColor:
+                                              Constants.secondaryColor,
+                                          child: Text(
+                                            (index + 1).toString(),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: Constants.popins,
+                                            ),
+                                          ),
+                                        ),
+                                        title: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              data[index]['uitility_categories']
+                                                  .toString(),
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                IconButton(
+                                                  onPressed: () {
+                                                    name.text = data[index]
+                                                        ['uitility_categories'];
+                                                    updatemachine(
+                                                        context,
+                                                        data[index]['id']
+                                                            .toString());
+                                                  },
+                                                  icon: Icon(Icons.edit),
+                                                  color: Colors.green,
+                                                ),
+                                                // SizedBox(width: 20),
+                                                IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(
+                                                        context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: Icon(Icons.delete),
+                                                  color: Colors.red,
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        )),
+                                  ),
+                                );
+                              }),
+                        ),
+            ],
+          ),
         ),
       ),
     );
@@ -316,8 +354,6 @@ class _UtilityListState extends State<UtilityList> {
                         if (_key.currentState!.validate()) {
                           _key.currentState!.save();
                           Navigator.pop(context);
-                          print("name.text");
-                          print(name.text);
                           AddUtilityMachineList();
                         }
                       });
@@ -541,4 +577,7 @@ class _UtilityListState extends State<UtilityList> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

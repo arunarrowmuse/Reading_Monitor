@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class ManoMeterList extends StatefulWidget {
@@ -82,10 +83,13 @@ class ManoSteamBoiler extends StatefulWidget {
   State<ManoSteamBoiler> createState() => _ManoSteamBoilerState();
 }
 
-class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
+class _ManoSteamBoilerState extends State<ManoSteamBoiler>
+    with AutomaticKeepAliveClientMixin<ManoSteamBoiler> {
   TextEditingController name = TextEditingController();
   bool isLoad = false;
   var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -98,18 +102,22 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
     setState(() {
       isLoad = true;
     });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
     print("2");
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}mmsblist'),
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     print("3");
+    print(response.statusCode);
     if (response.statusCode == 200) {
       print("4");
-      print(response.statusCode);
-      print("data");
+      // print(response.statusCode);
+      // print("datdddda");
       data = jsonDecode(response.body);
       print(data);
       setState(() {
@@ -126,12 +134,13 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
 
   void AddManoSteamMachineList(String machine) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmsbadd'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "steamboiler": machine,
+        "steam_boiler": machine,
       }),
     );
     if (response.statusCode == 200) {
@@ -148,16 +157,19 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
 
   void UpdateManoSteamMachineList(String uid, String machine, String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmsbupdate'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
-      body: jsonEncode(
-          <String, String>{"uid": uid, "steamboiler": machine, "id": id}),
+      body: jsonEncode(<String, String>{
+        '_method': "PUT",
+        "steam_boiler": machine,
+      }),
     );
     if (response.statusCode == 200) {
       name.clear();
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Updated!");
       FetchManoSteamMachineList();
     } else {
@@ -169,13 +181,15 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmsbdelete/$id'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Deleted!");
       FetchManoSteamMachineList();
     } else {
@@ -185,128 +199,151 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => FetchManoSteamMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? Container(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 15),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              // crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  data[index]["steamboiler"],
-                                  style: TextStyle(
-                                      fontFamily: Constants.popins,
-                                      color: Constants.textColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15),
-                                ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {
-                                          name.text =
-                                              data[index]['steamboiler'];
-                                          _updateDialog(
-                                              context,
-                                              data[index]['uid'].toString(),
-                                              data[index]['id'].toString());
-                                        },
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.green,
-                                          size: 20,
-                                        )),
-                                    IconButton(
-                                        onPressed: () {
-                                          _deleteMachineDialog(
-                                              context, data[index]['id']);
-                                        },
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                          size: 20,
-                                        )),
-                                  ],
-                                ),
-                              ],
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              // final item = titles[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5, horizontal: 15),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        data[index]["steam_boiler"].toString(),
+                                        style: TextStyle(
+                                            fontFamily: Constants.popins,
+                                            color: Constants.textColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                              onPressed: () {
+                                                name.text = data[index]
+                                                        ['steam_boiler']
+                                                    .toString();
+                                                _updateDialog(
+                                                    context,
+                                                    data[index]['uid']
+                                                        .toString(),
+                                                    data[index]['id']
+                                                        .toString());
+                                              },
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                color: Colors.green,
+                                                size: 20,
+                                              )),
+                                          IconButton(
+                                              onPressed: () {
+                                                _deleteMachineDialog(
+                                                    context, data[index]['id']);
+                                              },
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                                size: 20,
+                                              )),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
     );
@@ -606,6 +643,9 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class ManoThermoPack extends StatefulWidget {
@@ -615,10 +655,12 @@ class ManoThermoPack extends StatefulWidget {
   State<ManoThermoPack> createState() => _ManoThermoPackState();
 }
 
-class _ManoThermoPackState extends State<ManoThermoPack> {
-  TextEditingController name = TextEditingController();
+class _ManoThermoPackState extends State<ManoThermoPack> with AutomaticKeepAliveClientMixin<ManoThermoPack> {
+  TextEditingController nameController = TextEditingController();
   bool isLoad = false;
   var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -630,15 +672,17 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}mmtplist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
-      print(response.statusCode);
+      // print(response.statusCode);
       print("data");
       data = jsonDecode(response.body);
       print(data);
@@ -654,18 +698,19 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
   }
 
   void AddManoThermoMachineList(String machine) async {
-    name.clear();
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmtpadd'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
         "thermopack": machine,
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      nameController.clear();
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
       FetchManoThermoMachineList();
     } else {
@@ -678,16 +723,19 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
   void UpdateManoThermoMachineList(
       String uid, String machine, String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmtpupdate'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
-      body: jsonEncode(
-          <String, String>{"uid": uid, "thermopack": machine, "id": id}),
+      body: jsonEncode(<String, String>{
+        '_method': "PUT",
+        "thermopack": machine,
+      }),
     );
     if (response.statusCode == 200) {
-      name.clear();
-      data = jsonDecode(response.body);
+      nameController.clear();
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Updated!");
       FetchManoThermoMachineList();
     } else {
@@ -699,10 +747,12 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mmtpdelete/$id'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       data = jsonDecode(response.body);
@@ -717,128 +767,165 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: (){
+        return Future(() => FetchManoThermoMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? Container(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 500,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 15),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              // crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  data[index]['thermopack'],
+                          ),
+                        )
+                      : (data.length == 0)
+                          ? Container(
+                              height: 300,
+                              child: Center(
+                                child: Text(
+                                  "no machines found",
                                   style: TextStyle(
                                       fontFamily: Constants.popins,
                                       color: Constants.textColor,
-                                      fontWeight: FontWeight.w600,
+                                      // fontWeight: FontWeight.w600,
                                       fontSize: 15),
                                 ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {
-                                          name.text = data[index]['thermopack'];
-                                          _updateDialog(
-                                                  context,
-                                                  data[index]['uid'].toString(),
-                                                  data[index]['id'].toString())
-                                              .toString();
-                                        },
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.green,
-                                          size: 20,
-                                        )),
-                                    IconButton(
-                                        onPressed: () {
-                                          _deleteMachineDialog(
-                                              context, data[index]['id']);
-                                        },
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                          size: 20,
-                                        )),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                              ),
+                            )
+                          : Expanded(
+                              child: ListView.builder(
+                                itemCount: data.length,
+                                itemBuilder: (context, index) {
+                                  // final item = titles[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(15.0)),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 2,
+                                            blurRadius: 3,
+                                            offset: const Offset(0,
+                                                3), // changes position of shadow
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 5, horizontal: 15),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            data[index]['thermopack'].toString(),
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                color: Constants.textColor,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    nameController.text =
+                                                        data[index]['thermopack'];
+                                                    _updateDialog(
+                                                            context,
+                                                            data[index]['uid']
+                                                                .toString(),
+                                                            data[index]['id']
+                                                                .toString())
+                                                        .toString();
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  )),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+            ],
+          ),
         ),
       ),
     );
@@ -864,7 +951,7 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
               height: 40,
               width: w * 0.25,
               child: TextField(
-                controller: name,
+                controller: nameController,
                 style: TextStyle(
                   fontFamily: Constants.popins,
                   // color: Constants.textColor,
@@ -907,9 +994,12 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
                 child: ElevatedButton(
                   onPressed: () {
                     setState(() {
-                      Navigator.pop(context);
-                      AddManoThermoMachineList(name.text);
-                      // Constants.showtoast("Machine Added!");
+                      if (nameController.text == "") {
+                        Constants.showtoast("please fill the field");
+                      } else {
+                        Navigator.pop(context);
+                        AddManoThermoMachineList(nameController.text);
+                      }
                     });
                   },
                   style: ButtonStyle(
@@ -973,7 +1063,7 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
                     }
                     return null;
                   },
-                  controller: name,
+                  controller: nameController,
                   style: TextStyle(
                     fontFamily: Constants.popins,
                     // color: Constants.textColor,
@@ -1020,7 +1110,8 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
                       if (key.currentState!.validate()) {
                         key.currentState!.save();
                         Navigator.pop(context);
-                        UpdateManoThermoMachineList(uid, name.text, id);
+                        UpdateManoThermoMachineList(
+                            uid, nameController.text, id);
                       }
                     });
                   },
@@ -1128,4 +1219,7 @@ class _ManoThermoPackState extends State<ManoThermoPack> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

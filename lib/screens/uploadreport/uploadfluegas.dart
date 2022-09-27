@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants.dart';
 
 class UploadFlueGas extends StatefulWidget {
@@ -11,157 +13,58 @@ class UploadFlueGas extends StatefulWidget {
 }
 
 class _UploadFlueGasState extends State<UploadFlueGas> {
-  DateTime selectedDate = DateTime.now();
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime.now());
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
-    final w = MediaQuery.of(context).size.width;
-    DateTime now = DateTime.now();
-    var formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
     return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            height: 40,
-            // color: Constants.secondaryColor,
-            child: GestureDetector(
-              onTap: () {
-                _selectDate(context);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      // Icon(Icons.calendar_month, color: Colors.white,),
-                      Container(
-                          padding: const EdgeInsets.all(8.0),
-                          height: 40,
-                          width: 40,
-                          child: Image.asset(
-                            "assets/icons/calendar.png",
-                            color: Constants.primaryColor,
-                          )),
-                      SizedBox(
-                        height: 30,
-                        width: 100,
-                        child: Center(
+      body: DefaultTabController(
+          length: 2, // length of tabs
+          initialIndex: 0,
+          child: SingleChildScrollView(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Container(
+                    color: Constants.primaryColor,
+                    child: TabBar(
+                      indicatorColor: Colors.red,
+                      // labelColor: Colors.green,
+                      // unselectedLabelColor: Colors.black,
+                      tabs: [
+                        Tab(
                           child: Text(
-                            formattedDate,
+                            "Steam Boiler",
                             style: TextStyle(
-                                color: Constants.secondaryColor,
-                                fontSize: 16,
+                                fontFamily: Constants.popins,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                fontFamily: Constants.popins),
+                                fontSize: 15),
                           ),
                         ),
-                      ),
-                      Container(
-                          padding: const EdgeInsets.all(8.0),
-                          height: 40,
-                          width: 40,
-                          child: Image.asset(
-                            "assets/icons/down.png",
-                            color: Constants.primaryColor,
-                          )),
-                      // Icon(Icons.l, color: Colors.white,),
-                    ],
+                        Tab(
+                          child: Text(
+                            "Thermopack",
+                            style: TextStyle(
+                                fontFamily: Constants.popins,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
-                    height: 30,
-                    padding: const EdgeInsets.only(right: 15.0),
-                    // width: 100,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(" Sumbit  ",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: Constants.popins,
-                                  fontSize: 14)),
-                          Image.asset(
-                            "assets/icons/Edit.png",
-                            height: 16,
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          DefaultTabController(
-              length: 2, // length of tabs
-              initialIndex: 0,
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Container(
-                      color: Constants.primaryColor,
-                      child: TabBar(
-                        indicatorColor: Colors.red,
-                        // labelColor: Colors.green,
-                        // unselectedLabelColor: Colors.black,
-                        tabs: [
-                          Tab(
-                            child: Text(
-                              "Steam Boiler",
-                              style: TextStyle(
-                                  fontFamily: Constants.popins,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15),
-                            ),
-                          ),
-                          Tab(
-                            child: Text(
-                              "Thermopack",
-                              style: TextStyle(
-                                  fontFamily: Constants.popins,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                        height: h / 1.5, //height of TabBarView
-                        decoration: BoxDecoration(
-                            border: Border(
-                                top: BorderSide(
-                                    color: Colors.grey, width: 0.5))),
-                        child: TabBarView(children: <Widget>[
-                          UploadFlueSteam(),
-                          UploadFlueThermo(),
-                        ]))
-                  ])),
-        ],
-      ),
+                      height: h / 1.35, //height of TabBarView
+                      decoration: BoxDecoration(
+                          border: Border(
+                              top: BorderSide(color: Colors.grey, width: 0.5))),
+                      child: TabBarView(children: <Widget>[
+                        UploadFlueSteam(),
+                        UploadFlueThermo(),
+                      ]))
+                ]),
+          )),
     );
   }
 }
@@ -173,538 +76,512 @@ class UploadFlueSteam extends StatefulWidget {
   State<UploadFlueSteam> createState() => _UploadFlueSteamState();
 }
 
-class _UploadFlueSteamState extends State<UploadFlueSteam> {
-  var stringListReturnedFromApiCall = [
-    "Machine one",
-    "Machine two",
-    "Machine three",
-    "Machine four",
-    "Machine five",
-  ];
-  var ValueCallValue = ["0.02", "0.04", "0.23", "0.98", "0.47"];
-  var TempCallValue = ["26", "21", "16", "11", "31"];
-
-  List<TextEditingController> FlowControllers = [];
-  List<TextEditingController> UnitControllers = [];
+class _UploadFlueSteamState extends State<UploadFlueSteam> with AutomaticKeepAliveClientMixin<UploadFlueSteam> {
+  List<TextEditingController> ValueControllers = [];
+  List<TextEditingController> TempControllers = [];
+  List<TextEditingController> ValueID = [];
   DateTime selectedDate = DateTime.now();
+  bool isLoad = false;
+  var data;
+  var listdata;
+  late SharedPreferences prefs;
+  String? tokenvalue;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2015, 8),
+       lastDate: DateTime(2050, 1));
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        ValueControllers.clear();
+        TempControllers.clear();
+        FetchFlueSteamList();
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    ValueCallValue.forEach((String str) {
-      var textEditingController = TextEditingController(text: str);
-      FlowControllers.add(textEditingController);
+    FetchFlueSteamList();
+  }
+
+  void FetchFlueSteamList() async {
+    setState(() {
+      isLoad = true;
     });
-    TempCallValue.forEach((String str) {
-      var textEditingController = TextEditingController(text: str);
-      UnitControllers.add(textEditingController);
-    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetFlueGasSteamBolierListingData'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      listdata = jsonDecode(response.body);
+      print("machine list");
+      print(listdata.length);
+      print(listdata);
+      final responses = await http.get(
+        Uri.parse(
+            '${Constants.weblink}FlueGasSteamBoilerReportUploadSharch/${selectedDate.toString().split(" ")[0]}'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+      );
+      if (responses.statusCode == 200) {
+        data = jsonDecode(responses.body);
+        print(" upload data");
+        print(data.length);
+        print(data);
+        if (data.length == 0) {
+          for (int i = 0; i < listdata.length; i++) {
+            var flowController = TextEditingController(text: "");
+            var unitController = TextEditingController(text: "");
+            ValueControllers.add(flowController);
+            TempControllers.add(unitController);
+          }
+        } else {
+          for (int i = 0; i < data.length; i++) {
+            var idController =
+                TextEditingController(text: data[i]['id'].toString());
+            var valueController =
+                TextEditingController(text: data[i]['value'].toString());
+            var tempController =
+                TextEditingController(text: data[i]['temperature'].toString());
+            ValueID.add(idController);
+            ValueControllers.add(valueController);
+            TempControllers.add(tempController);
+          }
+        }
+        setState(() {
+          isLoad = false;
+        });
+      } else {
+        print(responses.statusCode);
+        print(responses.body);
+        setState(() {
+          isLoad = false;
+        });
+        Constants.showtoast("Error Fetching Data.");
+      }
+    } else {
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
+  void AddFlueSteamList() async {
+    for (int i = 0; i < listdata.length; i++) {
+      String value = "0";
+      String temp = "0";
+      if (ValueControllers[i].text != "") {
+        value = ValueControllers[i].text;
+      }
+      if (TempControllers[i].text != "") {
+        temp = TempControllers[i].text;
+      }
+      final response = await http.post(
+        Uri.parse('${Constants.weblink}FlueGasSteamBoilerReportUploadAdd'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+        body: jsonEncode(<String, String>{
+          "date": selectedDate.toString().split(" ")[0],
+          "machine_id": listdata[i]["id"].toString(),
+          "value": value,
+          "temperature": temp
+        }),
+      );
+      if (response.statusCode == 200) {
+        // data = jsonDecode(response.body);
+        if (i == listdata.length - 1) {
+          Constants.showtoast("Report Added!");
+          Utils(context).stopLoading();
+        }
+        // Constants.showtoast("Report Updated!");
+      } else {
+        print(response.statusCode);
+        print(response.body);
+        Constants.showtoast("Error Updating Data.");
+        Utils(context).stopLoading();
+      }
+    }
+    FetchFlueSteamList();
+  }
+
+  void UpdateFlueSteamList() async {
+    for (int i = 0; i < listdata.length; i++) {
+      String value = "0";
+      String temp = "0";
+      if (ValueControllers[i].text != "") {
+        value = ValueControllers[i].text;
+      }
+      if (TempControllers[i].text != "") {
+        temp = TempControllers[i].text;
+      }
+      final response = await http.put(
+        Uri.parse(
+            '${Constants.weblink}FlueGasSteamBoilerReportUploadUpdate/${data[i]['id']}'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+        body: jsonEncode(<String, String>{
+          "value": value,
+          "temperature": temp
+        }),
+      );
+      if (response.statusCode == 200) {
+        // data = jsonDecode(response.body);
+        if (i == listdata.length - 1) {
+          Constants.showtoast("Report Updated!");
+          Utils(context).stopLoading();
+        }
+        // Constants.showtoast("Report Updated!");
+      } else {
+        print(response.statusCode);
+        print(response.body);
+        Constants.showtoast("Error Updating Data.");
+        Utils(context).stopLoading();
+      }
+    }
+    FetchFlueSteamList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
+    var formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
+    final GlobalKey<FormState> _key = GlobalKey<FormState>();
+    return RefreshIndicator(
+      onRefresh: (){
+        return Future(() => FetchFlueSteamList());
+      },
+      child: Scaffold(
+          body: Form(
+        key: _key,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20),
           child: Column(
             children: [
+              const SizedBox(height: 10),
               Container(
-                  width: w / 1.1,
+                height: 40,
+                // color: Constants.secondaryColor,
+                child: GestureDetector(
+                  onTap: () {
+                    _selectDate(context);
+                  },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text(
-                            "ID FAN(Hz)",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12),
-                          ),
-                          const SizedBox(width: 5),
+                          // Icon(Icons.calendar_month, color: Colors.white,),
+                          Container(
+                              padding: const EdgeInsets.all(8.0),
+                              height: 40,
+                              width: 40,
+                              child: Image.asset(
+                                "assets/icons/calendar.png",
+                                color: Constants.primaryColor,
+                              )),
                           SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: TDSControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                              ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "FD Fan(HZ)",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12),
-                          ),
-                          const SizedBox(width: 5),
-                          SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: PHControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                              ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            children: [
-                              Text(
-                                "Coal",
+                            height: 30,
+                            width: 100,
+                            child: Center(
+                              child: Text(
+                                formattedDate,
                                 style: TextStyle(
-                                    fontFamily: Constants.popins,
-                                    // color: Constants.textColor,
+                                    color: Constants.secondaryColor,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 12),
+                                    fontFamily: Constants.popins),
                               ),
-                              Text(
-                                "Used",
-                                style: TextStyle(
-                                    fontFamily: Constants.popins,
-                                    // color: Constants.textColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 5),
-                          SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: PHControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                              ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
                             ),
                           ),
+                          Container(
+                              padding: const EdgeInsets.all(8.0),
+                              height: 40,
+                              width: 40,
+                              child: Image.asset(
+                                "assets/icons/down.png",
+                                color: Constants.primaryColor,
+                              )),
+                          // Icon(Icons.l, color: Colors.white,),
                         ],
                       ),
-                    ],
-                  )),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                    const BorderRadius.all(Radius.circular(15.0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 2,
-                        blurRadius: 3,
-                        offset:
-                        const Offset(0, 3), // changes position of shadow
-                      ),
-                    ],
-                  ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        // crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "APH TO FURNANCE",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
                       Container(
-                          width: w / 1,
+                        height: 30,
+                        padding: const EdgeInsets.only(right: 15.0),
+                        // width: 100,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_key.currentState!.validate()) {
+                              _key.currentState!.save();
+                              Utils(context).startLoading();
+                              if (data.length == 0) {
+                                AddFlueSteamList();
+                              } else {
+                                UpdateFlueSteamList();
+                              }
+                            }
+                          },
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  Constants.primaryColor)),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Value",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    height: 35,
-                                    width: w * 0.25,
-                                    child: TextField(
-                                      // controller: FlowControllers[index],
-                                      style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                          contentPadding:
-                                          const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
-                                                width: 1.0),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Constants.primaryColor,
-                                                width: 2.0),
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          filled: true,
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontFamily: Constants.popins,
-                                          ),
-                                          // hintText: "first name",
-                                          fillColor: Colors.white70),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Temp",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    height: 35,
-                                    width: w * 0.25,
-                                    child: TextField(
-                                      // controller: UnitControllers[index],
-                                      style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                          contentPadding:
-                                          const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
-                                                width: 1.0),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Constants.primaryColor,
-                                                width: 2.0),
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          filled: true,
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontFamily: Constants.popins,
-                                          ),
-                                          // hintText: "first name",
-                                          fillColor: Colors.white70),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              Text(" Sumbit  ",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: Constants.popins,
+                                      fontSize: 14)),
+                              Image.asset(
+                                "assets/icons/Edit.png",
+                                height: 16,
+                              )
                             ],
-                          ))
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: stringListReturnedFromApiCall.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                          const BorderRadius.all(Radius.circular(15.0)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 2,
-                              blurRadius: 3,
-                              offset:
-                              const Offset(0, 3), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              // crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  stringListReturnedFromApiCall[index].toString(),
-                                  style: TextStyle(
-                                      fontFamily: Constants.popins,
-                                      color: Constants.textColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            Container(
-                                width: w / 1,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Value",
-                                          style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        SizedBox(
-                                          height: 35,
-                                          width: w * 0.25,
-                                          child: TextField(
-                                            controller: FlowControllers[index],
-                                            style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                            ),
-                                            decoration: InputDecoration(
-                                                contentPadding:
-                                                const EdgeInsets.only(
-                                                    bottom: 10.0, left: 10.0),
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color: Colors.grey.shade300,
-                                                      width: 1.0),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Constants.primaryColor,
-                                                      width: 2.0),
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                filled: true,
-                                                hintStyle: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontFamily: Constants.popins,
-                                                ),
-                                                // hintText: "first name",
-                                                fillColor: Colors.white70),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Temp",
-                                          style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        SizedBox(
-                                          height: 35,
-                                          width: w * 0.25,
-                                          child: TextField(
-                                            controller: UnitControllers[index],
-                                            style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                            ),
-                                            decoration: InputDecoration(
-                                                contentPadding:
-                                                const EdgeInsets.only(
-                                                    bottom: 10.0, left: 10.0),
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color: Colors.grey.shade300,
-                                                      width: 1.0),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Constants.primaryColor,
-                                                      width: 2.0),
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                filled: true,
-                                                hintStyle: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontFamily: Constants.popins,
-                                                ),
-                                                // hintText: "first name",
-                                                fillColor: Colors.white70),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ))
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+              const SizedBox(height: 10),
+              (isLoad == true)
+                  ? SizedBox(
+                height: 300,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Constants.primaryColor,
+                  ),
                 ),
-              ),
+              )
+                  : (listdata.length == 0)
+                  ? Container(
+                height: 300,
+                child: Center(
+                  child: Text(
+                    "no machines found",
+                    style: TextStyle(
+                        fontFamily: Constants.popins,
+                        color: Constants.textColor,
+                        // fontWeight: FontWeight.w600,
+                        fontSize: 15),
+                  ),
+                ),
+              )
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: listdata.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(15.0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 2,
+                                    blurRadius: 3,
+                                    offset: const Offset(
+                                        0, 3), // changes position of shadow
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 15),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        listdata[index]['machine_name']
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontFamily: Constants.popins,
+                                            color: Constants.textColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 10),
+                                  Container(
+                                      width: w / 1,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                "Value",
+                                                style: TextStyle(
+                                                    fontFamily: Constants.popins,
+                                                    // color: Constants.textColor,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              SizedBox(
+                                                height: 35,
+                                                width: w * 0.25,
+                                          child: TextFormField(
+                                    keyboardType: TextInputType.number,
+                                                  controller:
+                                                      ValueControllers[index],
+                                                  style: TextStyle(
+                                                    fontFamily: Constants.popins,
+                                                    // color: Constants.textColor,
+                                                  ),
+                                                  decoration: InputDecoration(
+                                                      contentPadding:
+                                                          const EdgeInsets.only(
+                                                              bottom: 10.0,
+                                                              left: 10.0),
+                                                      isDense: true,
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                      ),
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                        borderSide: BorderSide(
+                                                            color: Colors
+                                                                .grey.shade300,
+                                                            width: 1.0),
+                                                      ),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: Constants
+                                                                .primaryColor,
+                                                            width: 2.0),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                      ),
+                                                      filled: true,
+                                                      hintStyle: TextStyle(
+                                                        color: Colors.grey[400],
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                      ),
+                                                      // hintText: "first name",
+                                                      fillColor: Colors.white70),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                "Temp",
+                                                style: TextStyle(
+                                                    fontFamily: Constants.popins,
+                                                    // color: Constants.textColor,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              SizedBox(
+                                                height: 35,
+                                                width: w * 0.25,
+                                          child: TextFormField(
+                                    keyboardType: TextInputType.number,
+                                                  controller:
+                                                      TempControllers[index],
+                                                  style: TextStyle(
+                                                    fontFamily: Constants.popins,
+                                                    // color: Constants.textColor,
+                                                  ),
+                                                  decoration: InputDecoration(
+                                                      contentPadding:
+                                                          const EdgeInsets.only(
+                                                              bottom: 10.0,
+                                                              left: 10.0),
+                                                      isDense: true,
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                      ),
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                        borderSide: BorderSide(
+                                                            color: Colors
+                                                                .grey.shade300,
+                                                            width: 1.0),
+                                                      ),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: Constants
+                                                                .primaryColor,
+                                                            width: 2.0),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8.0),
+                                                      ),
+                                                      filled: true,
+                                                      hintStyle: TextStyle(
+                                                        color: Colors.grey[400],
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                      ),
+                                                      // hintText: "first name",
+                                                      fillColor: Colors.white70),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ))
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
             ],
           ),
-        ));
+        ),
+      )),
+    );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class UploadFlueThermo extends StatefulWidget {
@@ -714,536 +591,512 @@ class UploadFlueThermo extends StatefulWidget {
   State<UploadFlueThermo> createState() => _UploadFlueThermoState();
 }
 
-class _UploadFlueThermoState extends State<UploadFlueThermo> {
-  var stringListReturnedFromApiCall = [
-    "Machine one",
-    "Machine two",
-    "Machine three",
-    "Machine four",
-    "Machine five",
-  ];
-  var ValueCallValue = ["0.02", "0.04", "0.23", "0.98", "0.47"];
-  var TempCallValue = ["26", "21", "16", "11", "31"];
-
-  List<TextEditingController> FlowControllers = [];
-  List<TextEditingController> UnitControllers = [];
+class _UploadFlueThermoState extends State<UploadFlueThermo> with AutomaticKeepAliveClientMixin<UploadFlueThermo> {
+  List<TextEditingController> ValueControllers = [];
+  List<TextEditingController> TempControllers = [];
+  List<TextEditingController> ValueID = [];
   DateTime selectedDate = DateTime.now();
+  bool isLoad = false;
+  var data;
+  var listdata;
+  late SharedPreferences prefs;
+  String? tokenvalue;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2015, 8),
+       lastDate: DateTime(2050, 1));
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        ValueControllers.clear();
+        TempControllers.clear();
+
+        FetchFlueThermoList();
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    ValueCallValue.forEach((String str) {
-      var textEditingController = TextEditingController(text: str);
-      FlowControllers.add(textEditingController);
+    FetchFlueThermoList();
+  }
+
+
+  void FetchFlueThermoList() async {
+    setState(() {
+      isLoad = true;
     });
-    TempCallValue.forEach((String str) {
-      var textEditingController = TextEditingController(text: str);
-      UnitControllers.add(textEditingController);
-    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingData'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      listdata = jsonDecode(response.body);
+      print("machine list");
+      print(listdata.length);
+      print(listdata);
+      final responses = await http.get(
+        Uri.parse(
+            '${Constants.weblink}FlueGasThermoPackReportUploadSearch/${selectedDate.toString().split(" ")[0]}'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+      );
+      if (responses.statusCode == 200) {
+        data = jsonDecode(responses.body);
+        print(" upload data");
+        print(data.length);
+        print(data);
+        if (data.length == 0) {
+          for (int i = 0; i < listdata.length; i++) {
+            var flowController = TextEditingController(text: "");
+            var unitController = TextEditingController(text: "");
+            ValueControllers.add(flowController);
+            TempControllers.add(unitController);
+          }
+        } else {
+          for (int i = 0; i < data.length; i++) {
+            var idController =
+            TextEditingController(text: data[i]['id'].toString());
+            var valueController =
+            TextEditingController(text: data[i]['value'].toString());
+            var tempController =
+            TextEditingController(text: data[i]['temperature'].toString());
+            ValueID.add(idController);
+            ValueControllers.add(valueController);
+            TempControllers.add(tempController);
+          }
+        }
+        setState(() {
+          isLoad = false;
+        });
+      } else {
+        print(responses.statusCode);
+        print(responses.body);
+        setState(() {
+          isLoad = false;
+        });
+        Constants.showtoast("Error Fetching Data.");
+      }
+    } else {
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
+  void AddFlueThermoList() async {
+    for (int i = 0; i < listdata.length; i++) {
+      String value = "0";
+      String temp = "0";
+      if (ValueControllers[i].text != "") {
+        value = ValueControllers[i].text;
+      }
+      if (TempControllers[i].text != "") {
+        temp = TempControllers[i].text;
+      }
+      final response = await http.post(
+        Uri.parse('${Constants.weblink}FlueGasThermoPackReportUploadAdd'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+        body: jsonEncode(<String, String>{
+          "date": selectedDate.toString().split(" ")[0],
+          "machine_id": listdata[i]["id"].toString(),
+          "value": value,
+          "temperature": temp
+        }),
+      );
+      if (response.statusCode == 200) {
+        if (i == listdata.length - 1) {
+          Constants.showtoast("Report Added!");
+          Utils(context).stopLoading();
+        }
+      } else {
+        print(response.statusCode);
+        print(response.body);
+        Constants.showtoast("Error Updating Data.");
+        Utils(context).stopLoading();
+      }
+    }
+    FetchFlueThermoList();
+  }
+
+  void UpdateFlueThermoList() async {
+    for (int i = 0; i < listdata.length; i++) {
+      String value = "0";
+      String temp = "0";
+      if (ValueControllers[i].text != "") {
+        value = ValueControllers[i].text;
+      }
+      if (TempControllers[i].text != "") {
+        temp = TempControllers[i].text;
+      }
+      final response = await http.put(
+        Uri.parse(
+            '${Constants.weblink}FlueGasThermoPackReportUploadUpdate/${data[i]['id']}'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $tokenvalue',
+        },
+        body: jsonEncode(<String, String>{
+          "value": value,
+          "temperature": temp
+        }),
+      );
+      if (response.statusCode == 200) {
+        // data = jsonDecode(response.body);
+        if (i == listdata.length - 1) {
+          Constants.showtoast("Report Updated!");
+          Utils(context).stopLoading();
+        }
+        // Constants.showtoast("Report Updated!");
+      } else {
+        print(response.statusCode);
+        print(response.body);
+        Constants.showtoast("Error Updating Data.");
+        Utils(context).stopLoading();
+      }
+    }
+    FetchFlueThermoList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Container(
-                  width: w / 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+    var formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
+    final GlobalKey<FormState> _key = GlobalKey<FormState>();
+    return RefreshIndicator(
+      onRefresh: (){
+        return Future(() => FetchFlueThermoList());
+      },
+      child: Scaffold(
+          body: Form(
+            key: _key,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 40,
+                    // color: Constants.secondaryColor,
+                    child: GestureDetector(
+                      onTap: () {
+                        _selectDate(context);
+                      },
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "ID FAN(Hz)",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12),
-                          ),
-                          const SizedBox(width: 5),
-                          SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: TDSControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                              ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "FD Fan(HZ)",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12),
-                          ),
-                          const SizedBox(width: 5),
-                          SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: PHControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
-                              ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Text(
-                                "Coal",
-                                style: TextStyle(
-                                    fontFamily: Constants.popins,
-                                    // color: Constants.textColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12),
+                              // Icon(Icons.calendar_month, color: Colors.white,),
+                              Container(
+                                  padding: const EdgeInsets.all(8.0),
+                                  height: 40,
+                                  width: 40,
+                                  child: Image.asset(
+                                    "assets/icons/calendar.png",
+                                    color: Constants.primaryColor,
+                                  )),
+                              SizedBox(
+                                height: 30,
+                                width: 100,
+                                child: Center(
+                                  child: Text(
+                                    formattedDate,
+                                    style: TextStyle(
+                                        color: Constants.secondaryColor,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: Constants.popins),
+                                  ),
+                                ),
                               ),
-                              Text(
-                                "Used",
-                                style: TextStyle(
-                                    fontFamily: Constants.popins,
-                                    // color: Constants.textColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12),
-                              ),
+                              Container(
+                                  padding: const EdgeInsets.all(8.0),
+                                  height: 40,
+                                  width: 40,
+                                  child: Image.asset(
+                                    "assets/icons/down.png",
+                                    color: Constants.primaryColor,
+                                  )),
+                              // Icon(Icons.l, color: Colors.white,),
                             ],
                           ),
-                          const SizedBox(width: 5),
-                          SizedBox(
-                            height: 35,
-                            width: w * 0.15,
-                            child: TextField(
-                              // controller: PHControllers[index],
-                              style: TextStyle(
-                                fontFamily: Constants.popins,
-                                // color: Constants.textColor,
+                          Container(
+                            height: 30,
+                            padding: const EdgeInsets.only(right: 15.0),
+                            // width: 100,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_key.currentState!.validate()) {
+                                  _key.currentState!.save();
+                                  Utils(context).startLoading();
+                                  if (data.length == 0) {
+                                    AddFlueThermoList();
+                                  } else {
+                                    UpdateFlueThermoList();
+                                  }
+                                }
+                              },
+                              style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                      Constants.primaryColor)),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(" Sumbit  ",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: Constants.popins,
+                                          fontSize: 14)),
+                                  Image.asset(
+                                    "assets/icons/Edit.png",
+                                    height: 16,
+                                  )
+                                ],
                               ),
-                              decoration: InputDecoration(
-                                  contentPadding:
-                                  const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                                  isDense: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    borderSide: BorderSide(
-                                        color: Colors.grey.shade300, width: 1.0),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Constants.primaryColor, width: 2.0),
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  filled: true,
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontFamily: Constants.popins,
-                                  ),
-                                  // hintText: "first name",
-                                  fillColor: Colors.white70),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  )),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                    const BorderRadius.all(Radius.circular(15.0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 2,
-                        blurRadius: 3,
-                        offset:
-                        const Offset(0, 3), // changes position of shadow
-                      ),
-                    ],
+                    ),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        // crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "APH TO FURNANCE",
-                            style: TextStyle(
-                                fontFamily: Constants.popins,
-                                color: Constants.textColor,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15),
-                          ),
-                        ],
+                  const SizedBox(height: 10),
+                  (isLoad == true)
+                      ? SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Constants.primaryColor,
                       ),
-                      SizedBox(height: 10),
-                      Container(
-                          width: w / 1,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Value",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    height: 35,
-                                    width: w * 0.25,
-                                    child: TextField(
-                                      // controller: FlowControllers[index],
-                                      style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                          contentPadding:
-                                          const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
-                                                width: 1.0),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Constants.primaryColor,
-                                                width: 2.0),
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          filled: true,
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontFamily: Constants.popins,
-                                          ),
-                                          // hintText: "first name",
-                                          fillColor: Colors.white70),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Temp",
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    height: 35,
-                                    width: w * 0.25,
-                                    child: TextField(
-                                      // controller: UnitControllers[index],
-                                      style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        // color: Constants.textColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                          contentPadding:
-                                          const EdgeInsets.only(
-                                              bottom: 10.0, left: 10.0),
-                                          isDense: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
-                                                width: 1.0),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Constants.primaryColor,
-                                                width: 2.0),
-                                            borderRadius:
-                                            BorderRadius.circular(8.0),
-                                          ),
-                                          filled: true,
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontFamily: Constants.popins,
-                                          ),
-                                          // hintText: "first name",
-                                          fillColor: Colors.white70),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ))
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: stringListReturnedFromApiCall.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                          const BorderRadius.all(Radius.circular(15.0)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 2,
-                              blurRadius: 3,
-                              offset:
-                              const Offset(0, 3), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              // crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  stringListReturnedFromApiCall[index].toString(),
-                                  style: TextStyle(
-                                      fontFamily: Constants.popins,
-                                      color: Constants.textColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15),
+                    ),
+                  )
+                      : (listdata.length == 0)
+                      ? Container(
+                    height: 300,
+                    child: Center(
+                      child: Text(
+                        "no machines found",
+                        style: TextStyle(
+                            fontFamily: Constants.popins,
+                            color: Constants.textColor,
+                            // fontWeight: FontWeight.w600,
+                            fontSize: 15),
+                      ),
+                    ),
+                  )
+                      : Expanded(
+                    child: ListView.builder(
+                      itemCount: listdata.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                              const BorderRadius.all(Radius.circular(15.0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 2,
+                                  blurRadius: 3,
+                                  offset: const Offset(
+                                      0, 3), // changes position of shadow
                                 ),
                               ],
                             ),
-                            SizedBox(height: 10),
-                            Container(
-                                width: w / 1,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 5, horizontal: 15),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  // crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Value",
-                                          style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        SizedBox(
-                                          height: 35,
-                                          width: w * 0.25,
-                                          child: TextField(
-                                            controller: FlowControllers[index],
-                                            style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                            ),
-                                            decoration: InputDecoration(
-                                                contentPadding:
-                                                const EdgeInsets.only(
-                                                    bottom: 10.0, left: 10.0),
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color: Colors.grey.shade300,
-                                                      width: 1.0),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Constants.primaryColor,
-                                                      width: 2.0),
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                filled: true,
-                                                hintStyle: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontFamily: Constants.popins,
-                                                ),
-                                                // hintText: "first name",
-                                                fillColor: Colors.white70),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Temp",
-                                          style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        SizedBox(
-                                          height: 35,
-                                          width: w * 0.25,
-                                          child: TextField(
-                                            controller: UnitControllers[index],
-                                            style: TextStyle(
-                                              fontFamily: Constants.popins,
-                                              // color: Constants.textColor,
-                                            ),
-                                            decoration: InputDecoration(
-                                                contentPadding:
-                                                const EdgeInsets.only(
-                                                    bottom: 10.0, left: 10.0),
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                  borderSide: BorderSide(
-                                                      color: Colors.grey.shade300,
-                                                      width: 1.0),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(
-                                                      color: Constants.primaryColor,
-                                                      width: 2.0),
-                                                  borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                                ),
-                                                filled: true,
-                                                hintStyle: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontFamily: Constants.popins,
-                                                ),
-                                                // hintText: "first name",
-                                                fillColor: Colors.white70),
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      listdata[index]['machine_name']
+                                          .toString(),
+                                      style: TextStyle(
+                                          fontFamily: Constants.popins,
+                                          color: Constants.textColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15),
                                     ),
                                   ],
-                                ))
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                                ),
+                                SizedBox(height: 10),
+                                Container(
+                                    width: w / 1,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Value",
+                                              style: TextStyle(
+                                                  fontFamily: Constants.popins,
+                                                  // color: Constants.textColor,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            SizedBox(
+                                              height: 35,
+                                              width: w * 0.25,
+                                        child: TextFormField(
+                                    keyboardType: TextInputType.number,
+
+                                                controller:
+                                                ValueControllers[index],
+                                                style: TextStyle(
+                                                  fontFamily: Constants.popins,
+                                                  // color: Constants.textColor,
+                                                ),
+                                                decoration: InputDecoration(
+                                                    contentPadding:
+                                                    const EdgeInsets.only(
+                                                        bottom: 10.0,
+                                                        left: 10.0),
+                                                    isDense: true,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                    ),
+                                                    enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                      borderSide: BorderSide(
+                                                          color: Colors
+                                                              .grey.shade300,
+                                                          width: 1.0),
+                                                    ),
+                                                    focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Constants
+                                                              .primaryColor,
+                                                          width: 2.0),
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                    ),
+                                                    filled: true,
+                                                    hintStyle: TextStyle(
+                                                      color: Colors.grey[400],
+                                                      fontFamily:
+                                                      Constants.popins,
+                                                    ),
+                                                    // hintText: "first name",
+                                                    fillColor: Colors.white70),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Temp",
+                                              style: TextStyle(
+                                                  fontFamily: Constants.popins,
+                                                  // color: Constants.textColor,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            SizedBox(
+                                              height: 35,
+                                              width: w * 0.25,
+                                        child: TextFormField(
+                                    keyboardType: TextInputType.number,
+
+                                                controller:
+                                                TempControllers[index],
+                                                style: TextStyle(
+                                                  fontFamily: Constants.popins,
+                                                  // color: Constants.textColor,
+                                                ),
+                                                decoration: InputDecoration(
+                                                    contentPadding:
+                                                    const EdgeInsets.only(
+                                                        bottom: 10.0,
+                                                        left: 10.0),
+                                                    isDense: true,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                    ),
+                                                    enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                      borderSide: BorderSide(
+                                                          color: Colors
+                                                              .grey.shade300,
+                                                          width: 1.0),
+                                                    ),
+                                                    focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Constants
+                                                              .primaryColor,
+                                                          width: 2.0),
+                                                      borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                    ),
+                                                    filled: true,
+                                                    hintStyle: TextStyle(
+                                                      color: Colors.grey[400],
+                                                      fontFamily:
+                                                      Constants.popins,
+                                                    ),
+                                                    // hintText: "first name",
+                                                    fillColor: Colors.white70),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ))
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ));
+            ),
+          )),
+    );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

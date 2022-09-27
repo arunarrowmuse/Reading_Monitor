@@ -24,31 +24,39 @@ class _MachineDetailState extends State<MachineDetail> {
   TextEditingController emhm = TextEditingController();
   TextEditingController emhmdev = TextEditingController();
   TextEditingController waterbatch = TextEditingController();
-  TextEditingController waterbatchdev = TextEditingController();
+  TextEditingController temperaturedev = TextEditingController();
   bool isLoad = false;
   var data;
   List filterdata = [];
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
     FetchSubMachineList();
   }
 
   void FetchSubMachineList() async {
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
     filterdata.clear();
     setState(() {
       isLoad = true;
     });
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}mcslist'),
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
+      print(response.statusCode);
+      print(response.body);
       data = jsonDecode(response.body);
+      print("hey im here");
       for (int i = 0; i < data.length; i++) {
         if (widget.id.toString() == data[i]['categories_id'].toString()) {
           filterdata.add(data[i]);
@@ -70,27 +78,29 @@ class _MachineDetailState extends State<MachineDetail> {
 
   void AddSubMachineList() async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mcsadd'),
+      Uri.parse('${Constants.weblink}MachineSubCategoriesAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
+        // '_method': "PUT",
         "categories_id": widget.id,
-        "name": name.text,
-        "em_hm1": emhm.text,
-        "em_hm2": emhmdev.text,
-        "water_batch1": waterbatch.text,
-        "water_batch2": waterbatchdev.text
+        "sub_name": name.text,
+        "em_hm": emhm.text,
+        "em_hm_percentage": emhmdev.text,
+        "water_batch": waterbatch.text,
+        "temp_percentage": temperaturedev.text
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
       name.clear();
       emhm.clear();
       emhmdev.clear();
       waterbatch.clear();
-      waterbatchdev.clear();
+      temperaturedev.clear();
       FetchSubMachineList();
     } else {
       print(response.statusCode);
@@ -101,17 +111,18 @@ class _MachineDetailState extends State<MachineDetail> {
 
   void UpdateSubMachineList(String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mcsupdate'),
+      Uri.parse('${Constants.weblink}MachineSubCategoriUpdated/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "name": name.text,
-        "em_hm1": emhm.text,
-        "em_hm2": emhmdev.text,
-        "water_batch1": waterbatch.text,
-        "water_batch2": waterbatchdev.text,
-        "id":id
+        '_method': "PUT",
+        "sub_name": name.text,
+        "em_hm": emhm.text,
+        "em_hm_percentage": emhmdev.text,
+        "water_batch": waterbatch.text,
+        "temp_percentage": temperaturedev.text,
       }),
     );
     if (response.statusCode == 200) {
@@ -121,7 +132,7 @@ class _MachineDetailState extends State<MachineDetail> {
       emhm.clear();
       emhmdev.clear();
       waterbatch.clear();
-      waterbatchdev.clear();
+      temperaturedev.clear();
       FetchSubMachineList();
     } else {
       print(response.statusCode);
@@ -132,11 +143,14 @@ class _MachineDetailState extends State<MachineDetail> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}mcsdelete/$id'),
+      Uri.parse('${Constants.weblink}MachineSubCategoriesDelated/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
+    print(response.statusCode);
     if (response.statusCode == 200) {
       Constants.showtoast("Machine Deleted!");
       FetchSubMachineList();
@@ -293,7 +307,7 @@ class _MachineDetailState extends State<MachineDetail> {
                               emhm.clear();
                               emhmdev.clear();
                               waterbatch.clear();
-                              waterbatchdev.clear();
+                              temperaturedev.clear();
                               _displayTextInputDialog(context);
                             },
                             style: ButtonStyle(
@@ -324,16 +338,30 @@ class _MachineDetailState extends State<MachineDetail> {
               const SizedBox(
                 height: 5,
               ),
-              (isLoad == true)
-                  ? SizedBox(
-                      height: 500,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Constants.primaryColor,
-                        ),
+                   (isLoad == true)
+                ? Container(
+                    height: 500,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Constants.primaryColor,
                       ),
-                    )
-                  : Expanded(
+                    ),
+                  )
+                : (filterdata.length == 0)
+                    ? Container(
+                        height: 300,
+                        child: Center(
+                          child: Text(
+                            "no machines found",
+                            style: TextStyle(
+                                fontFamily: Constants.popins,
+                                color: Constants.textColor,
+                                // fontWeight: FontWeight.w600,
+                                fontSize: 15),
+                          ),
+                        ),
+                      )
+                    : Expanded(
                       child: ListView.builder(
                           itemCount: filterdata.length,
                           itemBuilder: (BuildContext context, int index) {
@@ -364,7 +392,8 @@ class _MachineDetailState extends State<MachineDetail> {
                                       // crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          filterdata[index]['name'].toString(),
+                                          filterdata[index]['sub_name']
+                                              .toString(),
                                           style: TextStyle(
                                               fontFamily: Constants.popins,
                                               color: Constants.textColor,
@@ -375,12 +404,23 @@ class _MachineDetailState extends State<MachineDetail> {
                                           children: [
                                             IconButton(
                                                 onPressed: () {
-                                                  name.text =
-                                                      filterdata[index]['name'];
-                                                  emhm.text = filterdata[index]['em_hm1'].toString();
-                                                  emhmdev.text = filterdata[index]['em_hm2'].toString();
-                                                  waterbatch.text = filterdata[index]['water_batch1'].toString();
-                                                  waterbatchdev.text = filterdata[index]['water_batch2'].toString();
+                                                  name.text = filterdata[index]
+                                                      ['sub_name'];
+                                                  emhm.text = filterdata[index]
+                                                          ['em_hm']
+                                                      .toString();
+                                                  emhmdev
+                                                      .text = filterdata[index]
+                                                          ['em_hm_percentage']
+                                                      .toString();
+                                                  waterbatch.text =
+                                                      filterdata[index]
+                                                              ['water_batch']
+                                                          .toString();
+                                                  temperaturedev
+                                                      .text = filterdata[index]
+                                                          ['temp_percentage']
+                                                      .toString();
                                                   updateData(
                                                       context,
                                                       filterdata[index]['id']
@@ -429,7 +469,7 @@ class _MachineDetailState extends State<MachineDetail> {
                                                           fontSize: 12),
                                                     ),
                                                     Text(
-                                                      filterdata[index]['em_hm1']
+                                                      filterdata[index]['em_hm']
                                                           .toString(),
                                                       style: TextStyle(
                                                           fontFamily:
@@ -460,7 +500,7 @@ class _MachineDetailState extends State<MachineDetail> {
                                                     ),
                                                     Text(
                                                       filterdata[index]
-                                                              ['water_batch1']
+                                                              ['water_batch']
                                                           .toString(),
                                                       style: TextStyle(
                                                           fontFamily:
@@ -502,7 +542,8 @@ class _MachineDetailState extends State<MachineDetail> {
                                                           fontSize: 12),
                                                     ),
                                                     Text(
-                                                      filterdata[index]['em_hm2']
+                                                      filterdata[index][
+                                                              'em_hm_percentage']
                                                           .toString(),
                                                       style: TextStyle(
                                                           fontFamily:
@@ -532,8 +573,8 @@ class _MachineDetailState extends State<MachineDetail> {
                                                           fontSize: 12),
                                                     ),
                                                     Text(
-                                                      filterdata[index]
-                                                              ['water_batch2']
+                                                      filterdata[index][
+                                                              'temp_percentage']
                                                           .toString(),
                                                       style: TextStyle(
                                                           fontFamily:
@@ -649,6 +690,7 @@ class _MachineDetailState extends State<MachineDetail> {
                               height: 60,
                               width: w * 0.25,
                               child: TextFormField(
+                                keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Value is required.';
@@ -697,6 +739,7 @@ class _MachineDetailState extends State<MachineDetail> {
                               height: 60,
                               width: w * 0.25,
                               child: TextFormField(
+                                keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Value % is required.';
@@ -804,14 +847,14 @@ class _MachineDetailState extends State<MachineDetail> {
                                     return 'Value % is required.';
                                   return null;
                                 },
-                                controller: waterbatchdev,
+                                controller: temperaturedev,
                                 style: TextStyle(
                                   fontFamily: Constants.popins,
                                   // color: Constants.textColor,
                                 ),
                                 decoration: InputDecoration(
-                                    labelText: "Temp % ",
-                                    hintText: "Temp % ",
+                                    labelText: "Water/Batch % ",
+                                    hintText: "Water/Batch % ",
                                     contentPadding: const EdgeInsets.only(
                                         bottom: 10.0, left: 10.0),
                                     isDense: true,
@@ -980,6 +1023,7 @@ class _MachineDetailState extends State<MachineDetail> {
                               height: 60,
                               width: w * 0.25,
                               child: TextFormField(
+                                keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Value is required.';
@@ -1028,6 +1072,7 @@ class _MachineDetailState extends State<MachineDetail> {
                               height: 60,
                               width: w * 0.25,
                               child: TextFormField(
+                                keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Value % is required.';
@@ -1135,14 +1180,14 @@ class _MachineDetailState extends State<MachineDetail> {
                                     return 'Value % is required.';
                                   return null;
                                 },
-                                controller: waterbatchdev,
+                                controller: temperaturedev,
                                 style: TextStyle(
                                   fontFamily: Constants.popins,
                                   // color: Constants.textColor,
                                 ),
                                 decoration: InputDecoration(
-                                    labelText: "Temp % ",
-                                    hintText: "Temp % ",
+                                    labelText: "Water/Batch % ",
+                                    hintText: "Water/Batch % ",
                                     contentPadding: const EdgeInsets.only(
                                         bottom: 10.0, left: 10.0),
                                     isDense: true,

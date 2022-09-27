@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import '../../constants.dart';
 
 class ViewUtility extends StatefulWidget {
@@ -10,18 +13,16 @@ class ViewUtility extends StatefulWidget {
   State<ViewUtility> createState() => _ViewUtilityState();
 }
 
-class _ViewUtilityState extends State<ViewUtility> {
-
-  List data = [
-    "Jet",
-    "Jet 1",
-    "Jet 2",
-    "Machine",
-    "Mach 1",
-    "Mach 2",
-    "Mach 3",
-  ];
-
+class _ViewUtilityState extends State<ViewUtility>
+    with AutomaticKeepAliveClientMixin<ViewUtility> {
+  bool isLoad = false;
+  var data;
+  var sdata;
+  var machinedata;
+  var submachinedata;
+  String submachinedeviation = "";
+  late SharedPreferences prefs;
+  String? tokenvalue;
   DateTime selectedDate = DateTime.now();
 
   Future<void> _selectDate(BuildContext context) async {
@@ -29,11 +30,121 @@ class _ViewUtilityState extends State<ViewUtility> {
         context: context,
         initialDate: selectedDate,
         firstDate: DateTime(2015, 8),
-        lastDate: DateTime.now());
+        lastDate: DateTime(2050, 1));
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
+        FetchUtilityReport();
       });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    FetchUtilityReport();
+  }
+
+  void FetchUtilityReport() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse(
+          '${Constants.weblink}ViewReportUtilityDateSerchMainCategories/${selectedDate.toString().split(" ")[0]}'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      print("Main Machine");
+      data = jsonDecode(response.body);
+      print(data);
+      if (data.length != 0) {
+        FetchSubUtilityReport();
+      } else {
+        FetchUtilityMachineList();
+      }
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
+  void FetchSubUtilityReport() async {
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse(
+          '${Constants.weblink}ViewReportUtilityDateSerch/${selectedDate.toString().split(" ")[0]}'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print("Sub Machine");
+      sdata = jsonDecode(response.body);
+      print(sdata);
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
+  void FetchUtilityMachineList() async {
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetUtilityLisiting'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      machinedata = jsonDecode(response.body);
+      FetchSubMachineList();
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
+  void FetchSubMachineList() async {
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      submachinedata = jsonDecode(response.body);
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
     }
   }
 
@@ -43,184 +154,651 @@ class _ViewUtilityState extends State<ViewUtility> {
     final w = MediaQuery.of(context).size.width;
     DateTime now = DateTime.now();
     var formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
-    return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            height: 40,
-            // color: Constants.secondaryColor,
-            child: GestureDetector(
-              onTap: () {
-                _selectDate(context);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      // Icon(Icons.calendar_month, color: Colors.white,),
-                      Container(
-                          padding: const EdgeInsets.all(8.0),
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => FetchUtilityReport());
+      },
+      child: Scaffold(
+        body: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              height: 40,
+              // color: Constants.secondaryColor,
+              child: GestureDetector(
+                onTap: () {
+                  _selectDate(context);
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // Icon(Icons.calendar_month, color: Colors.white,),
+                        Container(
+                            padding: const EdgeInsets.all(8.0),
+                            height: 40,
+                            width: 40,
+                            child: Image.asset(
+                              "assets/icons/calendar.png",
+                              color: Constants.primaryColor,
+                            )),
+                        SizedBox(
+                          height: 30,
+                          width: 100,
+                          child: Center(
+                            child: Text(
+                              formattedDate,
+                              style: TextStyle(
+                                  color: Constants.secondaryColor,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: Constants.popins),
+                            ),
+                          ),
+                        ),
+                        Container(
+                            padding: const EdgeInsets.all(8.0),
+                            height: 40,
+                            width: 40,
+                            child: Image.asset(
+                              "assets/icons/down.png",
+                              color: Constants.primaryColor,
+                            )),
+                        // Icon(Icons.l, color: Colors.white,),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        SizedBox(
                           height: 40,
-                          width: 40,
-                          child: Image.asset(
-                            "assets/icons/calendar.png",
-                            color: Constants.primaryColor,
-                          )),
-                      SizedBox(
-                        height: 30,
-                        width: 100,
-                        child: Center(
-                          child: Text(
-                            formattedDate,
-                            style: TextStyle(
-                                color: Constants.secondaryColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: Constants.popins),
+                          // width: 100,
+                          child: FittedBox(
+                            fit: BoxFit.fitHeight,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Color(0xFFE1DFDD))),
+                              child: Text(" SMS ",
+                                  style: TextStyle(
+                                      color: Colors.grey,
+                                      fontFamily: Constants.popins,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                          padding: const EdgeInsets.all(8.0),
+                        SizedBox(width: 10),
+                        SizedBox(
                           height: 40,
-                          width: 40,
-                          child: Image.asset(
-                            "assets/icons/down.png",
-                            color: Constants.primaryColor,
-                          )),
-                      // Icon(Icons.l, color: Colors.white,),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      SizedBox(
-                        height: 40,
-                        // width: 100,
-                        child: FittedBox(
-                          fit: BoxFit.fitHeight,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        Color(0xFFE1DFDD))),
-                            child: Text(" SMS ",
-                                style: TextStyle(
-                                    color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
+                          // width: 100,
+                          child: FittedBox(
+                            fit: BoxFit.fitHeight,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Color(0xFFE1DFDD))),
+                              child: Text(" E-Mail ",
+                                  style: TextStyle(
+                                      color: Colors.grey,
+                                      fontFamily: Constants.popins,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      SizedBox(
-                        height: 40,
-                        // width: 100,
-                        child: FittedBox(
-                          fit: BoxFit.fitHeight,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        Color(0xFFE1DFDD))),
-                            child: Text(" E-Mail ",
-                                style: TextStyle(
-                                    color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                    ],
-                  )
-                ],
+                        SizedBox(width: 10),
+                      ],
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, index) {
-                  return (index == 3 || index == 0)
-                      ? Padding(
-                    padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 15.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Constants.secondaryColor,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 2, horizontal: 15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data[index],
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Colors.white,
-                                          // fontWeight: FontWeight.w600,
-                                          fontSize: 25),
+            (isLoad == true)
+                ? SizedBox(
+                    height: 500,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Constants.primaryColor,
+                      ),
+                    ),
+                  )
+                : (data.length != 0)
+                    ? Expanded(
+                        child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                    bottom: 5.0, left: 5, right: 5),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Constants.primaryColor,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 2, horizontal: 15),
+                                  child: ExpansionTile(
+                                    title: Container(),
+                                    subtitle: Container(
+                                      // color: Constants.secondaryColor,
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            // crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                data[index]
+                                                        ['uitility_categories']
+                                                    .toString(),
+                                                style: TextStyle(
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    color: Colors.white,
+                                                    // fontWeight: FontWeight.w600,
+                                                    fontSize: 25),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              SizedBox(
+                                                  width: w / 3,
+                                                  child: Column(
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            "EM",
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                          Text(
+                                                            data[index]["em"]
+                                                                .toStringAsFixed(
+                                                                    2),
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                decoration:
+                                                                    TextDecoration
+                                                                        .underline,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                // fontWeight: FontWeight.w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            "EM/HM",
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                          Text(
+                                                            (data[index][
+                                                                        "dev"] ??
+                                                                    0)
+                                                                .toStringAsFixed(
+                                                                    2),
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                decoration:
+                                                                    TextDecoration
+                                                                        .underline,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                // fontWeight: FontWeight.w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  )),
+                                              Container(
+                                                color: Constants.secondaryColor
+                                                    .withOpacity(0.2),
+                                                width: 1,
+                                                height: h / 15,
+                                              ),
+                                              SizedBox(
+                                                  width: w / 3,
+                                                  child: Column(
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            "HM",
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                          Text(
+                                                            data[index]["hm"]
+                                                                .toStringAsFixed(
+                                                                    2),
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                color: Colors
+                                                                    .white,
+                                                                decoration:
+                                                                    TextDecoration
+                                                                        .underline,
+                                                                // color: Constants.textColor,
+                                                                // fontWeight: FontWeight.w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            "Deviation",
+                                                            style: TextStyle(
+                                                                fontFamily:
+                                                                    Constants
+                                                                        .popins,
+                                                                color: Colors
+                                                                    .white,
+                                                                // color: Constants.textColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 12),
+                                                          ),
+                                                          ((data[index]["average"] ??
+                                                                          0) <
+                                                                      double.parse(
+                                                                          data[index]
+                                                                              [
+                                                                              "devation"]) &&
+                                                                  (data[index][
+                                                                              "average"] ??
+                                                                          0) >
+                                                                      double.parse(data[index]
+                                                                              [
+                                                                              "devation"]) *
+                                                                          -1)
+                                                              ? Text(
+                                                                  (data[index][
+                                                                              "average"] ??
+                                                                          0)
+                                                                      .toStringAsFixed(
+                                                                          2) + " %",
+                                                                  style: TextStyle(
+                                                                      fontFamily: Constants.popins,
+                                                                      color: Colors.white,
+                                                                      decoration: TextDecoration.underline,
+                                                                      // color: Constants.textColor,
+                                                                      // fontWeight: FontWeight.w600,
+                                                                      fontSize: 12),
+                                                                )
+                                                              : Text(
+                                                                  (data[index][
+                                                                              "average"] ??
+                                                                          0)
+                                                                      .toStringAsFixed(
+                                                                          2) + " %",
+                                                                  style: TextStyle(
+                                                                      fontFamily: Constants.popins,
+                                                                      color: Colors.red,
+                                                                      decoration: TextDecoration.underline,
+                                                                      // color: Constants.textColor,
+                                                                      fontWeight: FontWeight.w600,
+                                                                      fontSize: 12),
+                                                                ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  )),
+                                            ],
+                                          )
+                                        ],
+                                      ),
                                     ),
-
-                                  ],
+                                    children: <Widget>[
+                                      ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              NeverScrollableScrollPhysics(),
+                                          itemCount: sdata.length,
+                                          itemBuilder: (context, sindex) {
+                                            if (sdata[sindex]['dev'] == null) {
+                                              submachinedeviation = "0";
+                                            } else {
+                                              submachinedeviation =
+                                                  sdata[sindex]['dev']
+                                                      .toString();
+                                            }
+                                            return (data[index][
+                                                        'uitility_categories'] ==
+                                                    sdata[sindex]
+                                                        ['CategoryName'])
+                                                ? Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 5.0,
+                                                            left: 5,
+                                                            right: 5),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            const BorderRadius
+                                                                    .all(
+                                                                Radius.circular(
+                                                                    15.0)),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.grey
+                                                                .withOpacity(
+                                                                    0.2),
+                                                            spreadRadius: 2,
+                                                            blurRadius: 3,
+                                                            offset: const Offset(
+                                                                0,
+                                                                3), // changes position of shadow
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      padding: const EdgeInsets
+                                                              .symmetric(
+                                                          vertical: 2,
+                                                          horizontal: 15),
+                                                      child: Column(
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            // crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Text(
+                                                                sdata[sindex][
+                                                                        'SubCategoryName']
+                                                                    .toString(),
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.black,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 20),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              SizedBox(
+                                                                  width: w / 3,
+                                                                  child: Column(
+                                                                    children: [
+                                                                      Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Text(
+                                                                            "EM",
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                          Text(
+                                                                            sdata[sindex]["em"].toString(),
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                decoration: TextDecoration.underline,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                // fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Text(
+                                                                            "EM/HM",
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                          Text(
+                                                                            (sdata[sindex]["average"] ?? 0).toStringAsFixed(2),
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                decoration: TextDecoration.underline,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                // fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  )),
+                                                              Container(
+                                                                color: Constants
+                                                                    .secondaryColor
+                                                                    .withOpacity(
+                                                                        0.2),
+                                                                width: 1,
+                                                                height: h / 15,
+                                                              ),
+                                                              SizedBox(
+                                                                  width: w / 3,
+                                                                  child: Column(
+                                                                    children: [
+                                                                      Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Text(
+                                                                            "HM",
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                          Text(
+                                                                            sdata[sindex]["hm"].toString(),
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                color: Colors.black,
+                                                                                decoration: TextDecoration.underline,
+                                                                                // color: Constants.textColor,
+                                                                                // fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Text(
+                                                                            "Deviation",
+                                                                            style: TextStyle(
+                                                                                fontFamily: Constants.popins,
+                                                                                color: Colors.black,
+                                                                                // color: Constants.textColor,
+                                                                                fontWeight: FontWeight.w600,
+                                                                                fontSize: 12),
+                                                                          ),
+                                                                          (double.parse(submachinedeviation) < (sdata[index]["deviation"]) && double.parse(submachinedeviation) > (sdata[index]["deviation"]) * -1)
+                                                                              ? Text(
+                                                                                  (sdata[sindex]["dev"] ?? 0).toStringAsFixed(2) + " %",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                )
+                                                                              : Text(
+                                                                                  (sdata[sindex]["dev"] ?? 0).toStringAsFixed(2) + " %",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.red,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  )),
+                                                            ],
+                                                          )
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Container();
+                                          }),
+                                    ],
+                                  ),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
+                              );
+                            }),
+                      )
+                    : (machinedata.length == 0)
+                        ? Container(
+                            height: 500,
+                            child: Center(
+                              child: Text(
+                                "no machines found",
+                                style: TextStyle(
+                                    fontFamily: Constants.popins,
+                                    color: Constants.textColor,
+                                    // fontWeight: FontWeight.w600,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          )
+                        : Expanded(
+                            child: ListView.builder(
+                                itemCount: machinedata.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 5.0, left: 5, right: 5),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Constants.primaryColor,
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(15.0)),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 2,
+                                            blurRadius: 3,
+                                            offset: const Offset(0,
+                                                3), // changes position of shadow
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2, horizontal: 15),
+                                      child: ExpansionTile(
+                                        title: Container(),
+                                        subtitle: Column(
                                           children: [
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
+                                              // crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  "Value",
+                                                  machinedata[index][
+                                                          'uitility_categories']
+                                                      .toString(),
                                                   style: TextStyle(
                                                       fontFamily:
                                                           Constants.popins,
                                                       color: Colors.white,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  "0.5",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      color: Colors.white,
-                                                      // color: Constants.textColor,
                                                       // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
+                                                      fontSize: 25),
                                                 ),
                                               ],
                                             ),
@@ -229,316 +807,391 @@ class _ViewUtilityState extends State<ViewUtility> {
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Text(
-                                                  "Temp",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      color: Colors.white,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
+                                                SizedBox(
+                                                    width: w / 3,
+                                                    child: Column(
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "EM",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                            Text(
+                                                              "0",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  decoration:
+                                                                      TextDecoration
+                                                                          .underline,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  // fontWeight: FontWeight.w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "EM/HM",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                            Text(
+                                                              "0.00",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  decoration:
+                                                                      TextDecoration
+                                                                          .underline,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  // fontWeight: FontWeight.w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    )),
+                                                Container(
+                                                  color: Constants
+                                                      .secondaryColor
+                                                      .withOpacity(0.2),
+                                                  width: 1,
+                                                  height: h / 15,
                                                 ),
-                                                Text(
-                                                  "21",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      color: Colors.white,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
+                                                SizedBox(
+                                                    width: w / 3,
+                                                    child: Column(
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "HM",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                            Text(
+                                                              "0",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  decoration:
+                                                                      TextDecoration
+                                                                          .underline,
+                                                                  // color: Constants.textColor,
+                                                                  // fontWeight: FontWeight.w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              "Deviation",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  // color: Constants.textColor,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                            Text(
+                                                              "0.00 %",
+                                                              style: TextStyle(
+                                                                  fontFamily:
+                                                                      Constants
+                                                                          .popins,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  decoration:
+                                                                      TextDecoration
+                                                                          .underline,
+                                                                  // color: Constants.textColor,
+                                                                  // fontWeight: FontWeight.w600,
+                                                                  fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    )),
                                               ],
-                                            ),
+                                            )
                                           ],
-                                        )),
-                                    Container(
-                                      color: Constants.secondaryColor
-                                          .withOpacity(0.2),
-                                      width: 1,
-                                      height: h / 15,
+                                        ),
+                                        children: <Widget>[
+                                          ListView.builder(
+                                              shrinkWrap: true,
+                                              physics:
+                                                  NeverScrollableScrollPhysics(),
+                                              itemCount: submachinedata.length,
+                                              itemBuilder: (context, sindex) {
+                                                return (machinedata[index]
+                                                            ['id'] ==
+                                                        submachinedata[sindex][
+                                                            'uitility_categories_id'])
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .only(
+                                                                bottom: 5.0,
+                                                                left: 5,
+                                                                right: 5),
+                                                        child: Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            borderRadius:
+                                                                const BorderRadius
+                                                                        .all(
+                                                                    Radius.circular(
+                                                                        15.0)),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withOpacity(
+                                                                        0.2),
+                                                                spreadRadius: 2,
+                                                                blurRadius: 3,
+                                                                offset: const Offset(
+                                                                    0,
+                                                                    3), // changes position of shadow
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .symmetric(
+                                                                  vertical: 2,
+                                                                  horizontal:
+                                                                      15),
+                                                          child: Column(
+                                                            children: [
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                // crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Text(
+                                                                    submachinedata[sindex]
+                                                                            [
+                                                                            'uilitysubc_name']
+                                                                        .toString(),
+                                                                    style: TextStyle(
+                                                                        fontFamily: Constants.popins,
+                                                                        color: Colors.black,
+                                                                        // fontWeight: FontWeight.w600,
+                                                                        fontSize: 20),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  SizedBox(
+                                                                      width:
+                                                                          w / 3,
+                                                                      child:
+                                                                          Column(
+                                                                        children: [
+                                                                          Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.spaceBetween,
+                                                                            children: [
+                                                                              Text(
+                                                                                "EM",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                              Text(
+                                                                                "0",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    decoration: TextDecoration.underline,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    // fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                          Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.spaceBetween,
+                                                                            children: [
+                                                                              Text(
+                                                                                "EM/HM",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                              Text(
+                                                                                "0.00",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    decoration: TextDecoration.underline,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    // fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ],
+                                                                      )),
+                                                                  Container(
+                                                                    color: Constants
+                                                                        .secondaryColor
+                                                                        .withOpacity(
+                                                                            0.2),
+                                                                    width: 1,
+                                                                    height:
+                                                                        h / 15,
+                                                                  ),
+                                                                  SizedBox(
+                                                                      width:
+                                                                          w / 3,
+                                                                      child:
+                                                                          Column(
+                                                                        children: [
+                                                                          Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.spaceBetween,
+                                                                            children: [
+                                                                              Text(
+                                                                                "HM",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                              Text(
+                                                                                "0",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    decoration: TextDecoration.underline,
+                                                                                    // color: Constants.textColor,
+                                                                                    // fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                          Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.spaceBetween,
+                                                                            children: [
+                                                                              Text(
+                                                                                "Deviation",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    // color: Constants.textColor,
+                                                                                    fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                              Text(
+                                                                                "0.00 %",
+                                                                                style: TextStyle(
+                                                                                    fontFamily: Constants.popins,
+                                                                                    color: Colors.black,
+                                                                                    decoration: TextDecoration.underline,
+                                                                                    // color: Constants.textColor,
+                                                                                    // fontWeight: FontWeight.w600,
+                                                                                    fontSize: 12),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ],
+                                                                      )),
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : Container();
+                                              }),
+                                        ],
+                                      ),
                                     ),
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Value %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      color: Colors.white,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  "12 %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      color: Colors.white,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Temp %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      color: Colors.white,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  "33 %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      color: Colors.white,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        )),
-                                  ],
-                                )
-                              ],
-                            ),
+                                  );
+                                }),
                           ),
-                        )
-                      : Stack(
-                    children: [
-                      Positioned(
-                        top: -20,
-                        // bottom: 100,
-                        left: 30,
-                        child: Container(
-                          width: 5,
-                          height: 60,
-                          color: Constants.secondaryColor, //Text
-                        ),
-                      ),
-                      Positioned(
-                        top: -20,
-                        // bottom: 100,
-                        right: 30,
-                        child: Container(
-                          width: 5,
-                          height: 60,
-                          color: Constants.secondaryColor, //Text
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 15, right: 15),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                            const BorderRadius.all(Radius.circular(15.0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 3,
-                                offset: const Offset(
-                                    0, 3), // changes position of shadow
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 2, horizontal: 15),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                // crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    data[index],
-                                    style: TextStyle(
-                                        fontFamily: Constants.popins,
-                                        color: Constants.textColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SizedBox(
-                                      width: w / 3,
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                "Value",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    // color: Constants.textColor,
-                                                    fontWeight:
-                                                    FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                              Text(
-                                                "0.5",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    // color: Constants.textColor,
-                                                    // fontWeight: FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                "Temp",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    // color: Constants.textColor,
-                                                    fontWeight:
-                                                    FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                              Text(
-                                                "21",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    // color: Constants.textColor,
-                                                    // fontWeight: FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )),
-                                  Container(
-                                    color: Constants.secondaryColor
-                                        .withOpacity(0.2),
-                                    width: 1,
-                                    height: h / 15,
-                                  ),
-                                  SizedBox(
-                                      width: w / 3,
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                "Value %",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    // color: Constants.textColor,
-                                                    fontWeight:
-                                                    FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                              Text(
-                                                "12 %",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    // color: Constants.textColor,
-                                                    // fontWeight: FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
-                                            children: [
-                                              Text(
-                                                "Temp %",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    // color: Constants.textColor,
-                                                    fontWeight:
-                                                    FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                              Text(
-                                                "33 %",
-                                                style: TextStyle(
-                                                    fontFamily:
-                                                    Constants.popins,
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    // color: Constants.textColor,
-                                                    // fontWeight: FontWeight.w600,
-                                                    fontSize: 12),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      )),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-
-                      );
-                }),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

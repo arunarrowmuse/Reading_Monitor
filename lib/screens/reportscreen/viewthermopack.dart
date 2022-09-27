@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import '../../constants.dart';
 
 class ViewThermoPack extends StatefulWidget {
@@ -10,19 +13,64 @@ class ViewThermoPack extends StatefulWidget {
   State<ViewThermoPack> createState() => _ViewThermoPackState();
 }
 
-class _ViewThermoPackState extends State<ViewThermoPack> {
+class _ViewThermoPackState extends State<ViewThermoPack>
+    with AutomaticKeepAliveClientMixin<ViewThermoPack> {
   DateTime selectedDate = DateTime.now();
+  bool isLoad = false;
+  var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: selectedDate,
         firstDate: DateTime(2015, 8),
-        lastDate: DateTime.now());
+        lastDate: DateTime(2050, 1));
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
+        FetchThermoPackReport();
       });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    FetchThermoPackReport();
+  }
+
+  void FetchThermoPackReport() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse(
+          '${Constants.weblink}ViewReportThermopackDateSearchNew/${selectedDate.toString().split(" ")[0]}'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    print(response.statusCode);
+    if (response.statusCode == 200) {
+      print("data------------------------------");
+      // print(response.body);
+      data = jsonDecode(response.body);
+      print(data);
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
     }
   }
 
@@ -34,476 +82,931 @@ class _ViewThermoPackState extends State<ViewThermoPack> {
     var formattedDate = DateFormat('dd-MM-yyyy').format(selectedDate);
     return Scaffold(
         body: Column(
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              height: 40,
-              // color: Constants.secondaryColor,
-              child: GestureDetector(
-                onTap: () {
-                  _selectDate(context);
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        // Icon(Icons.calendar_month, color: Colors.white,),
-                        Container(
-                            padding: const EdgeInsets.all(8.0),
-                            height: 40,
-                            width: 40,
-                            child: Image.asset(
-                              "assets/icons/calendar.png",
-                              color: Constants.primaryColor,
-                            )),
-                        SizedBox(
-                          height: 30,
-                          width: 100,
-                          child: Center(
-                            child: Text(
-                              formattedDate,
-                              style: TextStyle(
-                                  color: Constants.secondaryColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: Constants.popins),
-                            ),
-                          ),
-                        ),
-                        Container(
-                            padding: const EdgeInsets.all(8.0),
-                            height: 40,
-                            width: 40,
-                            child: Image.asset(
-                              "assets/icons/down.png",
-                              color: Constants.primaryColor,
-                            )),
-                        // Icon(Icons.l, color: Colors.white,),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        SizedBox(
-                          height: 40,
-                          // width: 100,
-                          child: FittedBox(
-                            fit: BoxFit.fitHeight,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                      const Color(0xFFE1DFDD))),
-                              child: Text(" SMS ",
-                                  style: TextStyle(
-                                      color: Colors.grey,
-                                      fontFamily: Constants.popins,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          height: 40,
-                          // width: 100,
-                          child: FittedBox(
-                            fit: BoxFit.fitHeight,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                      const Color(0xFFE1DFDD))),
-                              child: Text(" E-Mail ",
-                                  style: TextStyle(
-                                      color: Colors.grey,
-                                      fontFamily: Constants.popins,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        const SizedBox(height: 10),
+        Container(
+          height: 40,
+          // color: Constants.secondaryColor,
+          child: GestureDetector(
+            onTap: () {
+              _selectDate(context);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Chamber :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("23.56",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
+                    // Icon(Icons.calendar_month, color: Colors.white,),
+                    Container(
+                        padding: const EdgeInsets.all(8.0),
+                        height: 40,
+                        width: 40,
+                        child: Image.asset(
+                          "assets/icons/calendar.png",
+                          color: Constants.primaryColor,
+                        )),
+                    SizedBox(
+                      height: 30,
+                      width: 100,
+                      child: Center(
+                        child: Text(
+                          formattedDate,
+                          style: TextStyle(
+                              color: Constants.secondaryColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: Constants.popins),
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" IN Temperature % :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("2.3",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Coal 1 :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("65",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Coal 2 :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("49",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Delta T :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("12.11",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Chamber   Cost :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("4.68",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
+                    Container(
+                        padding: const EdgeInsets.all(8.0),
+                        height: 40,
+                        width: 40,
+                        child: Image.asset(
+                          "assets/icons/down.png",
+                          color: Constants.primaryColor,
+                        )),
+                    // Icon(Icons.l, color: Colors.white,),
                   ],
                 ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("",
-                            style: TextStyle(
-                              color: Colors.white,
-                                fontFamily: Constants.popins,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.white,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("",
-                                style: TextStyle(
+                    SizedBox(
+                      height: 40,
+                      // width: 100,
+                      child: FittedBox(
+                        fit: BoxFit.fitHeight,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xFFE1DFDD))),
+                          child: Text(" SMS ",
+                              style: TextStyle(
                                   color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
+                                  fontFamily: Constants.popins,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
                         ),
-                      ],
-                    ), // todo invisible box
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Out Temperature :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("3.00",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Coal 1 Deviation :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("0.04",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      height: 40,
+                      // width: 100,
+                      child: FittedBox(
+                        fit: BoxFit.fitHeight,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  const Color(0xFFE1DFDD))),
+                          child: Text(" E-Mail ",
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontFamily: Constants.popins,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
                         ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Coal 2 Deviation :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("0.08",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Delta T % :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("18.77",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(" Chamber Cost % :",
-                            style: TextStyle(
-                              // color: Colors.grey,
-                                fontFamily: Constants.popins,
-                                // fontWeight: FontWeight.bold,
-                                fontSize: 14)),
-                        const SizedBox(height: 5),
-                        Container(
-                          height: 40,
-                          width: 140,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius:
-                              const BorderRadius.all(Radius.circular(8))),
-                          child: Center(
-                            child: Text("2.05",
-                                style: TextStyle(
-                                  // color: Colors.grey,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(width: 10),
                   ],
-                ),
+                )
               ],
             ),
-          ],
-        ));
+          ),
+        ),
+        const SizedBox(height: 20),
+        (isLoad == true)
+            ? SizedBox(
+                height: 500,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Constants.primaryColor,
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () {
+                  return Future(() => FetchThermoPackReport());
+                },
+                child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: (data.length != 0)
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(
+                                            data[0]['chamber'].toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Pump Pressure % :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(
+                                            data[0]['pump_presure'].toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 1 :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(data[0]['col1'].toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 2 :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(data[0]['col2'].toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Delta T :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(data[0]['dt'].toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber   Cost :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text((data[0]['cc']??0).toStringAsFixed(2),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: Constants.popins,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.white,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("",
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Circuit Pressure :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text(
+                                           ( data[0]['circuit_presure']??0)
+                                                .toString(),
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 1 Deviation :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: ((data[0]["coal_1"] ??0)<
+                                                    data[0]
+                                                        ['coal_deviation1'] &&
+                                                (data[0]["coal_1"]??0) >
+                                                    data[0]['coal_deviation1'] *
+                                                        -1)
+                                            ? Text((data[0]['coal_1']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    // color: Colors.grey,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontSize: 14))
+                                            : Text((data[0]['coal_1']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 2 Deviation :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: ((data[0]["coal_2"]??0) <
+                                                    data[0]
+                                                        ['coal_deviation2'] &&
+                                                (data[0]["coal_2"]??0) >
+                                                    data[0]['coal_deviation2'] *
+                                                        -1)
+                                            ? Text((data[0]['coal_2']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    // color: Colors.grey,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontSize: 14))
+                                            : Text((data[0]['coal_2']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Delta T % :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: ((data[0]["dtper"]??0) <
+                                                    data[0]['delta_t'] &&
+                                                (data[0]["dtper"]??0) >
+                                                    data[0]['delta_t'] * -1)
+                                            ? Text((data[0]['dtper']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    // color: Colors.red,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    // fontWeight: FontWeight.w600,
+                                                    fontSize: 14))
+                                            : Text((data[0]['dtper']??0).toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber Cost % :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: ((data[0]["ccper"]??0) <
+                                                    data[0][
+                                                        'chamber_cost_percentage'] &&
+                                                (data[0]["ccper"]??0) >
+                                                    data[0]['chamber_cost_percentage'] *
+                                                        -1)
+                                            ? Text(
+                                                (data[0]['ccper']??0)
+                                                    .toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    // color: Colors.grey,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontSize: 14))
+                                            : Text(
+                                                (data[0]['ccper']??0)
+                                                    .toStringAsFixed(2) + " %",
+                                                style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Pump Pressure",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 1 :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 2 :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Delta T :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber   Cost :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: Constants.popins,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.white,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("",
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Circuit Pressure :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 1 Deviation :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00 %",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Coal 2 Deviation :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00 %",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Delta T % :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00 %",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(" Chamber Cost % :",
+                                        style: TextStyle(
+                                            // color: Colors.grey,
+                                            fontFamily: Constants.popins,
+                                            // fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
+                                    const SizedBox(height: 5),
+                                    Container(
+                                      height: 40,
+                                      width: 140,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.grey,
+                                          ),
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(8))),
+                                      child: Center(
+                                        child: Text("0.00 %",
+                                            style: TextStyle(
+                                                // color: Colors.grey,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 14)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+      ],
+    ));
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

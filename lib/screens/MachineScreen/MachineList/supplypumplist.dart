@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class SupplyPumpList extends StatefulWidget {
@@ -11,12 +12,15 @@ class SupplyPumpList extends StatefulWidget {
   State<SupplyPumpList> createState() => _SupplyPumpListState();
 }
 
-class _SupplyPumpListState extends State<SupplyPumpList> {
+class _SupplyPumpListState extends State<SupplyPumpList>
+    with AutomaticKeepAliveClientMixin<SupplyPumpList> {
   TextEditingController name = TextEditingController();
   TextEditingController average = TextEditingController();
   TextEditingController deviation = TextEditingController();
   bool isLoad = false;
   var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -28,14 +32,18 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}spilist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetSupplyPumpListing'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
+      print(response.statusCode);
+      print(response.body);
       data = jsonDecode(response.body);
       print(data);
       setState(() {
@@ -50,21 +58,25 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
   }
 
   void AddSupplyMachineList(
-      String machine, String average, String deviation) async {
+      String machine, String averaged, String deviationd) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}spiadd'),
+      Uri.parse('${Constants.weblink}GetSupplyPumpDataAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
-        "average": average.toString(),
-        "deviation": deviation.toString(),
+        "name": machine,
+        "average": averaged.toString(),
+        "deviation": deviationd.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
+      name.clear();
+      average.clear();
+      deviation.clear();
       FetchSupplyMachineList();
     } else {
       print(response.statusCode);
@@ -76,15 +88,17 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
   void UpdateSupplyMachineList(
       String machine, String average, String deviation, String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}spiupdate'),
+      Uri.parse('${Constants.weblink}GetSupplyPumpDataUpdated/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
+        '_method': "PUT",
+        "name": machine,
         "average": average.toString(),
         "deviation": deviation.toString(),
-        "id": id.toString(),
+        // "id": id.toString(),
       }),
     );
     if (response.statusCode == 200) {
@@ -102,10 +116,12 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}spidelete/$id'),
+      Uri.parse('${Constants.weblink}GetSupplyPumpDataDeleted/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       Constants.showtoast("Machine Deleted!");
@@ -119,176 +135,203 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: (){
+        return  Future(() => FetchSupplyMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          name.clear();
+                          average.clear();
+                          deviation.clear();
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? SizedBox(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data[index]['machine'].toString(),
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                            onPressed: () {
-                                              name.text = data[index]['machine']
-                                                  .toString();
-                                              average.text = data[index]
-                                                      ['average']
-                                                  .toString();
-                                              deviation.text = data[index]
-                                                      ['deviation']
-                                                  .toString();
-                                              _updateDialog(context,
-                                                  data[index]['id'].toString());
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Colors.green,
-                                              size: 20,
-                                            )),
-                                        IconButton(
-                                            onPressed: () {
-                                              _deleteMachineDialog(
-                                                  context, data[index]['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 20,
-                                            )),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Flow / Unit (Average)",
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                    Text(
-                                      data[index]['average'].toString(),
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Deviation",
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                    Text(
-                                      data[index]['deviation'].toString(),
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                // Container(color: Colors.blue,width: w,height: 1,),
-                              ],
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              // final item = titles[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 15),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            data[index]['name'].toString(),
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                color: Constants.textColor,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    name.text = data[index]
+                                                            ['name']
+                                                        .toString();
+                                                    average.text = data[index]
+                                                            ['average']
+                                                        .toString();
+                                                    deviation.text = data[index]
+                                                            ['deviation']
+                                                        .toString();
+                                                    _updateDialog(
+                                                        context,
+                                                        data[index]['id']
+                                                            .toString());
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  )),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Flow / Unit (Average)",
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                          Text(
+                                            data[index]['average'].toString(),
+                                            style: TextStyle(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Deviation",
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                          Text(
+                                            data[index]['deviation'].toString(),
+                                            style: TextStyle(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      // Container(color: Colors.blue,width: w,height: 1,),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
     );
@@ -326,12 +369,12 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                       children: [
                         SizedBox(
                           height: 60,
-                          // width: w * 0.45,
+                          // width: w * 0.25,
                           child: TextFormField(
                             controller: name,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'Machine name is required.';
+                                return 'Name is required.';
                               return null;
                             },
                             style: TextStyle(
@@ -340,7 +383,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                             ),
                             decoration: InputDecoration(
                                 labelText: "Machine Name",
-                                hintText: "Enter Machine Name",
+                                hintText: "Machine Name",
                                 contentPadding: const EdgeInsets.only(
                                     bottom: 10.0, left: 10.0),
                                 isDense: true,
@@ -377,6 +420,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                           // width: w * 0.25,
                           child: TextFormField(
                             controller: average,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Average is required.';
@@ -424,6 +468,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                           height: 60,
                           child: TextFormField(
                             controller: deviation,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Unit is required.';
@@ -597,6 +642,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                           height: 60,
                           // width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             controller: average,
                             validator: (value) {
                               if (value == null || value.isEmpty)
@@ -644,6 +690,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
                           height: 60,
                           child: TextFormField(
                             controller: deviation,
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Unit is required.';
@@ -812,4 +859,7 @@ class _SupplyPumpListState extends State<SupplyPumpList> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

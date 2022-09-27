@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class MiscellaneousList extends StatefulWidget {
@@ -12,12 +13,16 @@ class MiscellaneousList extends StatefulWidget {
   State<MiscellaneousList> createState() => _MiscellaneousListState();
 }
 
-class _MiscellaneousListState extends State<MiscellaneousList> {
+class _MiscellaneousListState extends State<MiscellaneousList>
+    with AutomaticKeepAliveClientMixin<MiscellaneousList> {
   TextEditingController name = TextEditingController();
   TextEditingController unit = TextEditingController();
   TextEditingController deviation = TextEditingController();
   bool isLoad = false;
   var data;
+  int lastindex = 0;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -29,15 +34,18 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}misclist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}MiscLisiting'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
       data = jsonDecode(response.body);
+      print(data);
       setState(() {
         isLoad = false;
       });
@@ -52,21 +60,26 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
   void AddMiscMachineList(
       String machine, String units, String deviation) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}miscadd'),
+      Uri.parse('${Constants.weblink}MiscAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
-        "units": units.toString(),
+        "machine_name": machine.toString(),
+        "unit": unit.text.toString(),
         "deviation": deviation.toString(),
+        // "machine_name": machine,
+        // "unit": units.toString(),
+        // "deviation": deviation.toString(),
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
+      // lastindex = data.length + 1;
       Constants.showtoast("Machine Added!");
-      FetchMiscMachineList();
+      FetchMiscMachineList.call();
+      // AddUploadMiscList();
       // setState(() {
       //   isLoad = false;
       // });
@@ -81,19 +94,21 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
   void UpdateMiscMachineList(
       String machine, String units, String deviation, String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}miscupdate'),
+      Uri.parse('${Constants.weblink}MiscUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
-        "units": units.toString(),
+        '_method': "PUT",
+        "machine_name": machine,
+        "unit": units.toString(),
         "deviation": deviation.toString(),
-        "id": id,
+        // "id": id,
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
 
       Constants.showtoast("Machine Updated!");
       FetchMiscMachineList();
@@ -107,14 +122,15 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}miscdelete/$id'),
+      Uri.parse('${Constants.weblink}MiscDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
-
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Deleted!");
       FetchMiscMachineList();
       // setState(() {
@@ -130,178 +146,209 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              // crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _addMachineDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: () {
+        return Future(() => FetchMiscMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                // crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          name.clear();
+                          unit.clear();
+                          deviation.clear();
+                          _addMachineDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            (isLoad == true)
-                ? Container(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                      height: 500,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Constants.primaryColor,
+                        ),
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data[index]['machine'],
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                name.text =
-                                                    data[index]['machine'];
-                                                unit.text = data[index]['units']
-                                                    .toString();
-                                                deviation.text = data[index]
-                                                        ['deviation']
-                                                    .toString();
-                                              });
-                                              _updateMachineDialog(context,
-                                                  data[index]['id'].toString());
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Colors.green,
-                                              size: 20,
-                                            )),
-                                        IconButton(
-                                            onPressed: () {
-                                              _deleteMachineDialog(
-                                                  context, data[index]['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 20,
-                                            )),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Unit",
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                    Text(
-                                      data[index]['units'].toString(),
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Deviation",
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                    Text(
-                                      data[index]['deviation'].toString() +
-                                          " %",
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          fontFamily: Constants.popins,
-                                          fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                // Container(color: Colors.blue,width: w,height: 1,),
-                              ],
+                    )
+                  : (data.length == 0)
+                      ? Container(
+                          height: 300,
+                          child: Center(
+                            child: Text(
+                              "no machines found",
+                              style: TextStyle(
+                                  fontFamily: Constants.popins,
+                                  color: Constants.textColor,
+                                  // fontWeight: FontWeight.w600,
+                                  fontSize: 15),
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            itemBuilder: (context, index) {
+                              // final item = titles[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(15.0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 3,
+                                        offset: const Offset(
+                                            0, 3), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 15),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            data[index]['machine_name']
+                                                .toString(),
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                color: Constants.textColor,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      name.text = data[index]
+                                                          ['machine_name'];
+                                                      unit.text = data[index]
+                                                              ['unit']
+                                                          .toString();
+                                                      deviation.text =
+                                                          data[index]
+                                                                  ['deviation']
+                                                              .toString();
+                                                    });
+                                                    _updateMachineDialog(
+                                                        context,
+                                                        data[index]['id']
+                                                            .toString());
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    _deleteMachineDialog(
+                                                        context,
+                                                        data[index]['id']);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20,
+                                                  )),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Unit",
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                          Text(
+                                            data[index]['unit'].toString(),
+                                            style: TextStyle(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Deviation",
+                                            style: TextStyle(
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                          Text(
+                                            data[index]['deviation']
+                                                    .toString() +
+                                                " %",
+                                            style: TextStyle(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                fontFamily: Constants.popins,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      // Container(color: Colors.blue,width: w,height: 1,),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
     );
@@ -388,6 +435,7 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
                           height: 50,
                           // width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Unit is required.';
@@ -436,6 +484,7 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
                           height: 50,
                           // width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Deviation is required.';
@@ -611,6 +660,7 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
                           height: 50,
                           // width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Unit is required.';
@@ -659,6 +709,7 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
                           height: 50,
                           // width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
                                 return 'Deviation is required.';
@@ -826,4 +877,7 @@ class _MiscellaneousListState extends State<MiscellaneousList> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

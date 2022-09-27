@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../constants.dart';
 
 class WaterQualityList extends StatefulWidget {
@@ -11,16 +12,18 @@ class WaterQualityList extends StatefulWidget {
   State<WaterQualityList> createState() => _WaterQualityListState();
 }
 
-class _WaterQualityListState extends State<WaterQualityList> {
-  TextEditingController name = TextEditingController();
-  TextEditingController tds = TextEditingController();
-  TextEditingController tdsdv = TextEditingController();
-  TextEditingController pdh = TextEditingController();
-  TextEditingController pdhdv = TextEditingController();
-  TextEditingController hardness = TextEditingController();
+class _WaterQualityListState extends State<WaterQualityList> with AutomaticKeepAliveClientMixin<WaterQualityList> {
+  TextEditingController name         = TextEditingController();
+  TextEditingController tds          = TextEditingController();
+  TextEditingController tdsdv       = TextEditingController();
+  TextEditingController pdh         = TextEditingController();
+  TextEditingController pdhdv       = TextEditingController();
+  TextEditingController hardness    = TextEditingController();
   TextEditingController hardnessdv = TextEditingController();
   bool isLoad = false;
   var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
 
   @override
   void initState() {
@@ -32,14 +35,17 @@ class _WaterQualityListState extends State<WaterQualityList> {
     setState(() {
       isLoad = true;
     });
-
-    final response = await http.post(
-      Uri.parse('${Constants.weblink}wqlist'),
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetWaterQualityLisiting'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
     );
     if (response.statusCode == 200) {
+      print(response.statusCode);
       data = jsonDecode(response.body);
       print(data);
       setState(() {
@@ -53,26 +59,34 @@ class _WaterQualityListState extends State<WaterQualityList> {
     }
   }
 
-  void AddWaterMachineList(String machine, String tds, String tdsdv, String pdh,
-      String pdhdv, String hardness, String hardnessdv) async {
+  void AddWaterMachineList(String machine, String tdst, String tdsdvt, String pdht,
+      String pdhdvt, String hardnesst, String hardnessdvt) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}wqadd'),
+      Uri.parse('${Constants.weblink}WaterQualityAdd'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
-        "tds": tds,
-        "tds_dev": tdsdv,
-        "ph": pdh,
-        "ph_dev": pdhdv,
-        "hardness": hardness,
-        "hardness_dev": hardnessdv
+        "machine_name": machine,
+        "tds": tdst,
+        "tds_percentage": tdsdvt,
+        "ph": pdht,
+        "ph_deviation": pdhdvt,
+        "hardness": hardnesst,
+        "hardness_percentage": hardnessdvt
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Added!");
+      name.clear();
+      tds.clear();
+      tdsdv.clear();
+      pdh.clear();
+      pdhdv.clear();
+      hardness.clear();
+      hardnessdv.clear();
       FetchWaterMachineList();
     } else {
       print(response.statusCode);
@@ -91,23 +105,24 @@ class _WaterQualityListState extends State<WaterQualityList> {
       String hardnessdv,
       String id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}wqupdate'),
+      Uri.parse('${Constants.weblink}WaterQualityUpdate/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
       body: jsonEncode(<String, String>{
-        "machine": machine,
+        '_method': "PUT",
+        "machine_name": machine,
         "tds": tds,
-        "tds_dev": tdsdv,
+        "tds_percentage": tdsdv,
         "ph": pdh,
-        "ph_dev": pdhdv,
+        "ph_deviation": pdhdv,
         "hardness": hardness,
-        "hardness_dev": hardnessdv,
-        "id": id.toString(),
+        "hardness_percentage": hardnessdv,
       }),
     );
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body);
+      // data = jsonDecode(response.body);
       Constants.showtoast("Machine Updated!");
       FetchWaterMachineList();
     } else {
@@ -119,10 +134,12 @@ class _WaterQualityListState extends State<WaterQualityList> {
 
   void deleteMachine(int id) async {
     final response = await http.post(
-      Uri.parse('${Constants.weblink}wqdelete/$id'),
+      Uri.parse('${Constants.weblink}WaterQualityDelete/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
       },
+      body: jsonEncode(<String, String>{'_method': 'DELETE'}),
     );
     if (response.statusCode == 200) {
       Constants.showtoast("Machine Deleted!");
@@ -136,341 +153,367 @@ class _WaterQualityListState extends State<WaterQualityList> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.only(left: 18.0, right: 18),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  height: 40,
-                  // width: 100,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _displayTextInputDialog(context);
-                      },
-                      style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Constants.primaryColor)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(),
-                          const Text("Add        ",
-                              style: TextStyle(color: Colors.white)),
-                          const Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          )
-                        ],
+    return RefreshIndicator(
+      onRefresh: (){
+        return Future(() => FetchWaterMachineList());
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.only(left: 18.0, right: 18),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    // width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.fitHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          name.clear();
+                          tds.clear();
+                          tdsdv.clear();
+                          pdh.clear();
+                          pdhdv.clear();
+                          hardness.clear();
+                          hardnessdv.clear();
+                          _displayTextInputDialog(context);
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                Constants.primaryColor)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(),
+                            const Text("Add        ",
+                                style: TextStyle(color: Colors.white)),
+                            const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
+                ],
+              ),
+              (isLoad == true)
+                  ? Container(
+                height: 500,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Constants.primaryColor,
+                  ),
                 ),
-              ],
-            ),
-            (isLoad == true)
-                ? SizedBox(
-                    height: 500,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Constants.primaryColor,
+              )
+                  : (data.length == 0)
+                  ? Container(
+                height: 300,
+                child: Center(
+                  child: Text(
+                    "no machines found",
+                    style: TextStyle(
+                        fontFamily: Constants.popins,
+                        color: Constants.textColor,
+                        // fontWeight: FontWeight.w600,
+                        fontSize: 15),
+                  ),
+                ),
+              )
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: data.length,
+                        itemBuilder: (context, index) {
+                          // print(data[index]['tds']);
+                          // final item = titles[index];
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(15.0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 2,
+                                    blurRadius: 3,
+                                    offset: const Offset(
+                                        0, 3), // changes position of shadow
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        data[index]['machine_name'].toString(),
+                                        style: TextStyle(
+                                            fontFamily: Constants.popins,
+                                            color: Constants.textColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                              onPressed: () {
+                                                name.text =
+                                                    data[index]['machine_name'].toString();
+                                                tds.text =
+                                                    data[index]['tds'].toString();
+                                                tdsdv.text = data[index]
+                                                        ['tds_percentage']
+                                                    .toString();
+                                                pdh.text =
+                                                    data[index]['ph'].toString();
+                                                pdhdv.text = data[index]['ph_deviation']
+                                                    .toString();
+                                                hardness.text = data[index]
+                                                        ['hardness']
+                                                    .toString();
+                                                hardnessdv.text = data[index]
+                                                        ['hardness_percentage']
+                                                    .toString();
+                                                _updateDialog(context, data[index]['id'].toString());
+                                              },
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                color: Colors.green,
+                                                size: 20,
+                                              )),
+                                          IconButton(
+                                              onPressed: () {
+                                                _deleteMachineDialog(
+                                                    context, data[index]['id']);
+                                              },
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                color: Colors.red,
+                                                size: 20,
+                                              )),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                          width: w / 3,
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "TDS",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['tds'].toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "PH",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['ph'].toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "Hardness",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['hardness']
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          )),
+                                      Container(
+                                        color: Constants.secondaryColor
+                                            .withOpacity(0.2),
+                                        width: 1,
+                                        height: h / 15,
+                                      ),
+                                      SizedBox(
+                                          width: w / 3,
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "TDS %",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['tds_percentage']
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "PH %",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['ph_deviation']
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    "Hardness %",
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        // color: Constants.textColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                  Text(
+                                                    data[index]['hardness_percentage']
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        decoration: TextDecoration
+                                                            .underline,
+                                                        // color: Constants.textColor,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          )),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        // final item = titles[index];
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15.0)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 2,
-                                  blurRadius: 3,
-                                  offset: const Offset(
-                                      0, 3), // changes position of shadow
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data[index]['machine'],
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                            onPressed: () {
-                                              name.text =
-                                                  data[index]['machine'];
-                                              tds.text =
-                                                  data[index]['tds'].toString();
-                                              tdsdv.text = data[index]
-                                                      ['tds_dev']
-                                                  .toString();
-                                              pdh.text =
-                                                  data[index]['ph'].toString();
-                                              pdhdv.text = data[index]['ph_dev']
-                                                  .toString();
-                                              hardness.text = data[index]
-                                                      ['hardness']
-                                                  .toString();
-                                              hardnessdv.text = data[index]
-                                                      ['hardness_dev']
-                                                  .toString();
-                                              _updateDialog(context,
-                                                  data[index]['id'].toString());
-                                            },
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              color: Colors.green,
-                                              size: 20,
-                                            )),
-                                        IconButton(
-                                            onPressed: () {
-                                              _deleteMachineDialog(
-                                                  context, data[index]['id']);
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                              size: 20,
-                                            )),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "TDS",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['tds'].toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "PDH",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['ph'].toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Hardness",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['hardness']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        )),
-                                    Container(
-                                      color: Constants.secondaryColor
-                                          .withOpacity(0.2),
-                                      width: 1,
-                                      height: h / 15,
-                                    ),
-                                    SizedBox(
-                                        width: w / 3,
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "TDS %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['tds_dev']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "PDH %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['ph_dev']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  "Hardness %",
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      // color: Constants.textColor,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                                Text(
-                                                  data[index]['hardness_dev']
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                      fontFamily:
-                                                          Constants.popins,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      // color: Constants.textColor,
-                                                      // fontWeight: FontWeight.w600,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        )),
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  )
-          ],
+                    )
+            ],
+          ),
         ),
       ),
     );
@@ -555,6 +598,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -603,6 +647,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -656,6 +701,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -668,8 +714,8 @@ class _WaterQualityListState extends State<WaterQualityList> {
                               // color: Constants.textColor,
                             ),
                             decoration: InputDecoration(
-                                labelText: "PDH",
-                                hintText: "PDH",
+                                labelText: "PH",
+                                hintText: "PH",
                                 contentPadding: const EdgeInsets.only(
                                     bottom: 10.0, left: 10.0),
                                 isDense: true,
@@ -704,6 +750,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -716,8 +763,8 @@ class _WaterQualityListState extends State<WaterQualityList> {
                               // color: Constants.textColor,
                             ),
                             decoration: InputDecoration(
-                                labelText: "PDH % ",
-                                hintText: "PDH % ",
+                                labelText: "PH % ",
+                                hintText: "PH % ",
                                 contentPadding: const EdgeInsets.only(
                                     bottom: 10.0, left: 10.0),
                                 isDense: true,
@@ -757,6 +804,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -805,6 +853,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -985,6 +1034,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1033,6 +1083,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1086,6 +1137,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1098,8 +1150,8 @@ class _WaterQualityListState extends State<WaterQualityList> {
                               // color: Constants.textColor,
                             ),
                             decoration: InputDecoration(
-                                labelText: "PDH",
-                                hintText: "PDH",
+                                labelText: "PH",
+                                hintText: "PH",
                                 contentPadding: const EdgeInsets.only(
                                     bottom: 10.0, left: 10.0),
                                 isDense: true,
@@ -1134,6 +1186,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1146,8 +1199,8 @@ class _WaterQualityListState extends State<WaterQualityList> {
                               // color: Constants.textColor,
                             ),
                             decoration: InputDecoration(
-                                labelText: "PDH % ",
-                                hintText: "PDH % ",
+                                labelText: "PH % ",
+                                hintText: "PH % ",
                                 contentPadding: const EdgeInsets.only(
                                     bottom: 10.0, left: 10.0),
                                 isDense: true,
@@ -1187,6 +1240,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1235,6 +1289,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
                           height: 60,
                           width: w * 0.25,
                           child: TextFormField(
+                            keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Unit is required.';
@@ -1320,12 +1375,13 @@ class _WaterQualityListState extends State<WaterQualityList> {
                       const Icon(
                         Icons.add,
                         color: Colors.white,
+                        size: 14,
                       ),
                       Text(
-                        "Add",
+                        "Update",
                         style: TextStyle(
                           // color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14,
                           fontFamily: Constants.popins,
                         ),
                       ),
@@ -1411,4 +1467,7 @@ class _WaterQualityListState extends State<WaterQualityList> {
           );
         });
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

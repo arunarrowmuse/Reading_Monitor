@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -10,6 +13,49 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool isLoad = false;
+  var data;
+  late SharedPreferences prefs;
+  String? tokenvalue;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfile();
+  }
+
+  void fetchProfile() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetProfileshow'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    print(response.statusCode);
+    if (response.statusCode == 200) {
+      print("data------------------------------");
+      // print(response.body);
+      data = jsonDecode(response.body);
+      print(data);
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // final h = MediaQuery.of(context).size.height;
@@ -19,7 +65,9 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10,),
+            const SizedBox(
+              height: 10,
+            ),
             Padding(
               padding: const EdgeInsets.only(left: 18.0, right: 18),
               child: Text(
@@ -226,7 +274,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Constants.primaryColor, width: 2.0),
+                                      color: Constants.primaryColor,
+                                      width: 2.0),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 filled: true,
@@ -339,7 +388,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Constants.primaryColor, width: 2.0),
+                                      color: Constants.primaryColor,
+                                      width: 2.0),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 filled: true,
@@ -384,7 +434,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Constants.primaryColor, width: 2.0),
+                                      color: Constants.primaryColor,
+                                      width: 2.0),
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 filled: true,
