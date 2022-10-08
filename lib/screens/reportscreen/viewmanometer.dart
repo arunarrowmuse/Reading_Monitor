@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math' as math;
 import '../../constants.dart';
 import 'package:http/http.dart' as http;
 
@@ -94,11 +93,11 @@ class _ViewManoSteamState extends State<ViewManoSteam> with AutomaticKeepAliveCl
   var machinedata;
   late SharedPreferences prefs;
   String? tokenvalue;
-  int idfan = 0;
-  int fdfan = 0;
-  int coal = 0;
-  int aphv = 0;
-  int apht = 0;
+  String idfan = "0";
+  String fdfan = "0";
+  String coal = "0";
+  String aphv = "0";
+  String apht = "0";
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -167,7 +166,7 @@ class _ViewManoSteamState extends State<ViewManoSteam> with AutomaticKeepAliveCl
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -479,22 +478,6 @@ class _ViewManoSteamState extends State<ViewManoSteam> with AutomaticKeepAliveCl
                         itemBuilder: (BuildContext context, int index) {
                           return Stack(
                             children: [
-                              // Transform.rotate(
-                              //   child: Center(
-                              //     child: Text(
-                              //       "<<",
-                              //       style: TextStyle(fontSize: 40),
-                              //     ),
-                              //   ),
-                              //   angle: -math.pi/2,
-                              // ),
-                              // Center(
-                              //   child: Container(
-                              //     width: 5,
-                              //     height: 60,
-                              //     color: Constants.secondaryColor, //Text
-                              //   ),
-                              // ),
                               Padding(
                                 padding: const EdgeInsets.only(
                                     left: 15.0, right: 15.0),
@@ -547,7 +530,7 @@ class _ViewManoSteamState extends State<ViewManoSteam> with AutomaticKeepAliveCl
                                                         color: Constants
                                                             .primaryColor)),
                                                 child: Center(
-                                                  child: Text((data[index]['value']??0).toStringAsFixed(2)),
+                                                  child: Text(num.parse((data[index]['value']??0).toString()).toStringAsFixed(2)),
                                                 ),
                                               ),
                                               Container(
@@ -569,7 +552,7 @@ class _ViewManoSteamState extends State<ViewManoSteam> with AutomaticKeepAliveCl
                                                         color: Constants
                                                             .primaryColor)),
                                                 child: Center(
-                                                  child: Text((data[index]['temperature']??0).toStringAsFixed(2)),
+                                                  child: Text(num.parse((data[index]['temperature']??0).toString()).toStringAsFixed(2)),
                                                 ),
                                               ),
                                             ],
@@ -1003,11 +986,11 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
   var machinedata;
   late SharedPreferences prefs;
   String? tokenvalue;
-  int idfan = 0;
-  int fdfan = 0;
-  int coal = 0;
-  int aphv = 0;
-  int apht = 0;
+  String idfan = "0";
+  String fdfan = "0";
+  String coal = "0";
+  String aphv = "0";
+  String apht = "0";
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -1045,7 +1028,7 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
     );
     print(response.statusCode);
     if (response.statusCode == 200) {
-      print("data------------------------------");
+      print("Machine Data");
       // print(response.body);
       data = jsonDecode(response.body);
       print(data);
@@ -1076,7 +1059,7 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -1087,6 +1070,7 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
       print("data");
       machinedata = jsonDecode(response.body);
       print(machinedata);
+      print(machinedata.length);
       setState(() {
         isLoad = false;
       });
@@ -1442,7 +1426,7 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
                                                   color: Constants
                                                       .primaryColor)),
                                           child: Center(
-                                            child: Text((data[index]['value']??0).toStringAsFixed(2)),
+                                            child: Text(num.parse((data[index]['value']??0).toString()).toStringAsFixed(2)),
                                           ),
                                         ),
                                         Container(
@@ -1464,7 +1448,7 @@ class _ViewManoThermoState extends State<ViewManoThermo> with AutomaticKeepAlive
                                                   color: Constants
                                                       .primaryColor)),
                                           child: Center(
-                                            child: Text((data[index]['temperature']??0).toStringAsFixed(2)),
+                                            child: Text(num.parse((data[index]['temperature']??0).toString()).toStringAsFixed(2)),
                                           ),
                                         ),
                                       ],

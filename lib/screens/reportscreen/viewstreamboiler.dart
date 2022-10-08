@@ -339,7 +339,7 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child: Text((data[0]['sc']??0).toStringAsFixed(2),
+                                      child: Text(num.parse((data[0]['sc']??0).toString()).toStringAsFixed(2),
                                           style: TextStyle(
                                               // color: Colors.grey,
                                               fontFamily: Constants.popins,
@@ -373,18 +373,18 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child:   ((data[0]["bfwper"]??0) <
+                                      child:   (num.parse((data[0]["bfwper"]??0).toString()) <
                                           num.parse(data[0][
                                           "bfw_percentageold"]) &&
-                                          (data[0]["bfwper"]??0) >
+                                          num.parse((data[0]["bfwper"]??0).toString()) >
                                               num.parse(data[0][
                                               "bfw_percentageold"]) *
                                                   -1)
-                                          ?Text((data[0]['bfwper']??0).toStringAsFixed(2) + " %",
+                                          ?Text(num.parse((data[0]['bfwper']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             // color: Colors.grey,
                                               fontFamily: Constants.popins,
-                                              fontSize: 14)):Text((data[0]['bfwper']??0).toStringAsFixed(2) + " %",
+                                              fontSize: 14)):Text(num.parse((data[0]['bfwper']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             color: Colors.red,
                                               fontWeight: FontWeight.w600,
@@ -415,18 +415,18 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child: ((data[0]["tempper"]??0) <
+                                      child: (num.parse((data[0]["tempper"]??0).toString()) <
                                           num.parse(data[0][
                                           "bfw_temperature_percentageold"]) &&
-                                          (data[0]["tempper"]??0) >
+                                          num.parse((data[0]["tempper"]??0).toString()) >
                                               num.parse(data[0][
                                               "bfw_temperature_percentageold"]) *
                                                   -1)
-                                          ?Text((data[0]['tempper']??0).toStringAsFixed(2) + " %",
+                                          ?Text(num.parse((data[0]['tempper']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                               // color: Colors.grey,
                                               fontFamily: Constants.popins,
-                                              fontSize: 14)):Text((data[0]['tempper']??0).toStringAsFixed(2) + " %",
+                                              fontSize: 14)):Text(num.parse((data[0]['tempper']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             color: Colors.red,
                                               fontFamily: Constants.popins,
@@ -457,18 +457,18 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child: ((data[0]["coal_1per"]??0) <
+                                      child: (num.parse((data[0]["coal_1per"]??0).toString()) <
                                           num.parse(data[0][
                                           "coal_deviation_1"]) &&
-                                          (data[0]["coal_1per"]??0) >
+                                          num.parse((data[0]["coal_1per"]??0).toString()) >
                                               num.parse(data[0][
                                               "coal_deviation_1"]) *
                                                   -1)
-                                          ? Text((data[0]['coal_1per']??0).toStringAsFixed(2) + " %",
+                                          ? Text(num.parse((data[0]['coal_1per']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                               // color: Colors.grey,
                                               fontFamily: Constants.popins,
-                                              fontSize: 14)): Text((data[0]['coal_1per']??0).toStringAsFixed(2) + " %",
+                                              fontSize: 14)): Text(num.parse((data[0]['coal_1per']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             color: Colors.red,
                                               fontFamily: Constants.popins,
@@ -499,18 +499,18 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child:((data[0]["coal_2per"]??0) <
+                                      child:(num.parse((data[0]["coal_2per"]??0).toString()) <
                                           num.parse(data[0][
                                           "coal_deviation_2"]) &&
-                                          (data[0]["coal_2per"]??0) >
+                                          num.parse((data[0]["coal_2per"]??0).toString()) >
                                               num.parse(data[0][
                                               "coal_deviation_2"]) *
                                                   -1)
-                                          ?  Text((data[0]['coal_2per']??0).toStringAsFixed(2) + " %",
+                                          ?  Text(num.parse((data[0]['coal_2per']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                               // color: Colors.grey,
                                               fontFamily: Constants.popins,
-                                              fontSize: 14)):Text((data[0]['coal_2per']??0).toStringAsFixed(2) + " %",
+                                              fontSize: 14)):Text(num.parse((data[0]['coal_2per']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             color: Colors.red,
                                               fontWeight: FontWeight.w600,
@@ -541,18 +541,18 @@ class _ViewSteamBoilerState extends State<ViewSteamBoiler>  with AutomaticKeepAl
                                         borderRadius: const BorderRadius.all(
                                             Radius.circular(8))),
                                     child: Center(
-                                      child:((data[0]["scper"]??0) <
+                                      child:(num.parse((data[0]["scper"]??0).toString()) <
                                           num.parse(data[0][
                                           "steam_cost_percentage"]) &&
-                                         (data[0]["scper"]??0) >
+                                         num.parse((data[0]["scper"]??0).toString()) >
                                               num.parse(data[0][
                                               "steam_cost_percentage"]) *
                                                   -1)
-                                          ?  Text((data[0]['scper']??0).toStringAsFixed(2) + " %",
+                                          ?  Text(num.parse((data[0]['scper']??0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                               // color: Colors.grey,
                                               fontFamily: Constants.popins,
-                                              fontSize: 14)): Text((data[0]['scper'] ?? 0).toStringAsFixed(2) + " %",
+                                              fontSize: 14)): Text(num.parse((data[0]['scper'] ?? 0).toString()).toStringAsFixed(2) + " %",
                                           style: TextStyle(
                                             color: Colors.red,
                                               fontWeight: FontWeight.w600,

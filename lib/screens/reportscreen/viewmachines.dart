@@ -13,7 +13,8 @@ class VIewMachines extends StatefulWidget {
   State<VIewMachines> createState() => _VIewMachinesState();
 }
 
-class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClientMixin<VIewMachines> {
+class _VIewMachinesState extends State<VIewMachines>
+    with AutomaticKeepAliveClientMixin<VIewMachines> {
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
   var data;
@@ -118,7 +119,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetMachineCategoriesListing'),
+      Uri.parse(
+          '${Constants.weblink}GetMachineCategoriesListing/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -146,7 +148,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing'),
+      Uri.parse(
+          '${Constants.weblink}GetMachineSubCategoriesListing/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -354,10 +357,12 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
@@ -370,7 +375,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -388,10 +394,12 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
@@ -404,7 +412,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -422,14 +431,17 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
-                                                          (data[index]['dev']??0)
+                                                          (data[index]['dev'] ??
+                                                                  0)
                                                               .toString(),
                                                           style: TextStyle(
                                                               fontFamily:
@@ -438,7 +450,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -456,52 +469,62 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
-                                                        ((data[index]["average"]??0) <
-                                                            num.parse(data[index]["em_hm_percentage"]) &&
-                                                                (data[index][
-                                                                        "average"]??0) >
-                                                                    num.parse(data[index]["em_hm_percentage"]) *
+                                                        (num.parse((data[index]["average"] ??
+                                                                        0).toString()) <
+                                                                    num.parse(data[index]
+                                                                            [
+                                                                            "em_hm_percentage"]
+                                                                        .toString()) &&
+                                                                num.parse((data[index][
+                                                                            "average"] ??
+                                                                        0).toString()) >
+                                                                    num.parse(data[index]["em_hm_percentage"]
+                                                                            .toString()) *
                                                                         -1)
                                                             ? Text(
-                                                                (data[index][
-                                                                        'average']??0)
-                                                                    .toStringAsFixed(
-                                                                        2) + " %",
+                                                          num.parse((data[index]['average'] ??
+                                                              0).toString())
+                                                              .toStringAsFixed(
+                                                              2) +
+                                                              " %",
                                                                 style: TextStyle(
-                                                                    fontFamily:
-                                                                        Constants
-                                                                            .popins,
-                                                                    decoration:
-                                                                        TextDecoration
-                                                                            .underline,
-                                                                    color: Colors
-                                                                        .white,
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
                                                                     // color: Constants.textColor,
                                                                     // fontWeight: FontWeight.w600,
                                                                     fontSize: 12),
                                                               )
                                                             : Text(
-                                                                (data[index]['average']??0).toStringAsFixed(2) + " %",
-                                                                style: TextStyle(
-                                                                    fontFamily:
-                                                                        Constants
-                                                                            .popins,
-                                                                    decoration:
-                                                                        TextDecoration
-                                                                            .underline,
-                                                                    color: Colors
-                                                                        .red,
-                                                                    // color: Constants.textColor,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                    fontSize: 12),
+                                                                num.parse((data[index]['average'] ??
+                                                                            0).toString())
+                                                                        .toStringAsFixed(
+                                                                            2) +
+                                                                    " %",
+                                                                style:
+                                                                    TextStyle(
+                                                                        fontFamily:
+                                                                            Constants
+                                                                                .popins,
+                                                                        decoration:
+                                                                            TextDecoration
+                                                                                .underline,
+                                                                        color: Colors
+                                                                            .red,
+                                                                        // color: Constants.textColor,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w600,
+                                                                        fontSize:
+                                                                            12),
                                                               ),
                                                       ],
                                                     ),
@@ -529,10 +552,12 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
@@ -545,7 +570,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -563,10 +589,12 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
@@ -579,7 +607,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -597,15 +626,18 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
                                                         Text(
-                                                          (data[index]
-                                                                  ['waterbatch']??0)
+                                                          (data[index][
+                                                                      'waterbatch'] ??
+                                                                  0)
                                                               .toString(),
                                                           style: TextStyle(
                                                               fontFamily:
@@ -614,7 +646,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               decoration:
                                                                   TextDecoration
                                                                       .underline,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               // fontWeight: FontWeight.w600,
                                                               fontSize: 12),
@@ -632,57 +665,64 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                               fontFamily:
                                                                   Constants
                                                                       .popins,
-                                                              color: Colors.white,
+                                                              color:
+                                                                  Colors.white,
                                                               // color: Constants.textColor,
                                                               fontWeight:
-                                                                  FontWeight.w600,
+                                                                  FontWeight
+                                                                      .w600,
                                                               fontSize: 12),
                                                         ),
-                                                        ((data[index]["weterper"]??0) <
+                                                        (num.parse((data[index]["weterper"] ??
+                                                                        0).toString()) <
                                                                     num.parse(data[index]
-                                                                        ["temp_percentage"]) &&
-                                                                (data[index]
-                                                                        ["weterper"]??0) >
-                                                                    num.parse(data[index][
-                                                                            "temp_percentage"]) *
+                                                                            [
+                                                                            "temp_percentage"]
+                                                                        .toString()) &&
+                                                                num.parse(((data[index][
+                                                                            "weterper"]) ??
+                                                                        0).toString()) >
+                                                                    num.parse(data[index]["temp_percentage"]
+                                                                            .toString()) *
                                                                         -1)
                                                             ? Text(
-                                                               ( data[index][
-                                                                        'weterper']??0)
-                                                                    .toStringAsFixed(
-                                                                        2) + " %",
+                                                                num.parse((data[index]['weterper'] ??
+                                                                                0)
+                                                                            .toString())
+                                                                        .toStringAsFixed(
+                                                                            2) +
+                                                                    " %",
                                                                 style: TextStyle(
-                                                                    fontFamily:
-                                                                        Constants
-                                                                            .popins,
-                                                                    decoration:
-                                                                        TextDecoration
-                                                                            .underline,
-                                                                    color: Colors
-                                                                        .white,
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
                                                                     // color: Constants.textColor,
                                                                     // fontWeight: FontWeight.w600,
                                                                     fontSize: 12),
                                                               )
                                                             : Text(
-                                                                (data[index][
-                                                                        'weterper']??0)
-                                                                    .toStringAsFixed(
-                                                                        2) + " %",
-                                                                style: TextStyle(
-                                                                    fontFamily:
-                                                                        Constants
-                                                                            .popins,
-                                                                    decoration:
-                                                                        TextDecoration
-                                                                            .underline,
-                                                                    color: Colors
-                                                                        .red,
-                                                                    // color: Constants.textColor,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                    fontSize: 12),
+                                                                num.parse((data[index]['weterper'] ??
+                                                                                0)
+                                                                            .toString())
+                                                                        .toStringAsFixed(
+                                                                            2) +
+                                                                    " %",
+                                                                style:
+                                                                    TextStyle(
+                                                                        fontFamily:
+                                                                            Constants
+                                                                                .popins,
+                                                                        decoration:
+                                                                            TextDecoration
+                                                                                .underline,
+                                                                        color: Colors
+                                                                            .red,
+                                                                        // color: Constants.textColor,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w600,
+                                                                        fontSize:
+                                                                            12),
                                                               ),
                                                       ],
                                                     ),
@@ -695,11 +735,13 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                     children: <Widget>[
                                       ListView.builder(
                                           shrinkWrap: true,
-                                          physics: NeverScrollableScrollPhysics(),
+                                          physics:
+                                              NeverScrollableScrollPhysics(),
                                           itemCount: sdata.length,
                                           itemBuilder: (context, sindex) {
                                             return (data[index]['categories'] ==
-                                                    sdata[sindex]['CategoryName'])
+                                                    sdata[sindex]
+                                                        ['CategoryName'])
                                                 ? Padding(
                                                     padding:
                                                         const EdgeInsets.only(
@@ -707,13 +749,15 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                             left: 5,
                                                             right: 5),
                                                     child: Container(
-                                                        decoration: BoxDecoration(
+                                                        decoration:
+                                                            BoxDecoration(
                                                           color: Colors.white,
                                                           borderRadius:
                                                               const BorderRadius
                                                                       .all(
-                                                                  Radius.circular(
-                                                                      15.0)),
+                                                                  Radius
+                                                                      .circular(
+                                                                          15.0)),
                                                           boxShadow: [
                                                             BoxShadow(
                                                               color: Colors.grey
@@ -727,10 +771,11 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                             ),
                                                           ],
                                                         ),
-                                                        padding: const EdgeInsets
-                                                                .symmetric(
-                                                            vertical: 2,
-                                                            horizontal: 15),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .symmetric(
+                                                                vertical: 2,
+                                                                horizontal: 15),
                                                         child: Column(
                                                           children: [
                                                             Row(
@@ -751,7 +796,8 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                 ),
                                                               ],
                                                             ),
-                                                            SizedBox(height: 10),
+                                                            SizedBox(
+                                                                height: 10),
                                                             // Container(color: Colors.blue,width: w,height: 1,),
                                                             Row(
                                                               mainAxisAlignment:
@@ -759,8 +805,10 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                       .spaceBetween,
                                                               children: [
                                                                 Container(
-                                                                    width: w / 3,
-                                                                    child: Column(
+                                                                    width:
+                                                                        w / 3,
+                                                                    child:
+                                                                        Column(
                                                                       children: [
                                                                         Row(
                                                                           mainAxisAlignment:
@@ -826,7 +874,7 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                   fontSize: 12),
                                                                             ),
                                                                             Text(
-                                                                              (sdata[sindex]['dev']??0).toString(),
+                                                                              (sdata[sindex]['dev'] ?? 0).toString(),
                                                                               style: TextStyle(
                                                                                   fontFamily: Constants.popins,
                                                                                   decoration: TextDecoration.underline,
@@ -850,9 +898,9 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                   fontWeight: FontWeight.w600,
                                                                                   fontSize: 12),
                                                                             ),
-                                                                            ((sdata[index]["average"]??0) < sdata[index]["em_hm_percentage"] && (sdata[index]["average"]??0) > sdata[index]["em_hm_percentage"] * -1)
+                                                                            (num.parse((sdata[index]["average"] ?? 0).toString()) < num.parse((sdata[index]["em_hm_percentage"]).toString()) && num.parse((sdata[index]["average"] ?? 0).toString()) > num.parse((sdata[index]["em_hm_percentage"]).toString()) * -1)
                                                                                 ? Text(
-                                                                                    (sdata[sindex]['average']??0).toStringAsFixed(2) + " %",
+                                                                                    num.parse((sdata[sindex]['average'] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                     style: TextStyle(
                                                                                         fontFamily: Constants.popins,
                                                                                         decoration: TextDecoration.underline,
@@ -862,7 +910,7 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                         fontSize: 12),
                                                                                   )
                                                                                 : Text(
-                                                                                    (sdata[sindex]['average']??0).toStringAsFixed(2) + " %",
+                                                                                    num.parse((sdata[sindex]['average'] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                     style: TextStyle(fontFamily: Constants.popins, decoration: TextDecoration.underline, color: Colors.red, fontWeight: FontWeight.w600, fontSize: 12),
                                                                                   ),
                                                                           ],
@@ -873,11 +921,14 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                   color: Colors
                                                                       .black,
                                                                   width: 1,
-                                                                  height: h / 15,
+                                                                  height:
+                                                                      h / 15,
                                                                 ),
                                                                 Container(
-                                                                    width: w / 3,
-                                                                    child: Column(
+                                                                    width:
+                                                                        w / 3,
+                                                                    child:
+                                                                        Column(
                                                                       children: [
                                                                         Row(
                                                                           mainAxisAlignment:
@@ -943,7 +994,7 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                   fontSize: 12),
                                                                             ),
                                                                             Text(
-                                                                              (sdata[sindex]['waterbatch']??0).toStringAsFixed(2),
+                                                                              num.parse((sdata[sindex]['waterbatch'] ?? 0).toString()).toStringAsFixed(2),
                                                                               style: TextStyle(
                                                                                   fontFamily: Constants.popins,
                                                                                   decoration: TextDecoration.underline,
@@ -967,9 +1018,9 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                   fontWeight: FontWeight.w600,
                                                                                   fontSize: 12),
                                                                             ),
-                                                                            ((sdata[index]["weterper"]??0) < sdata[index]["temp_percentage"] && (sdata[index]["weterper"]??0) > sdata[index]["temp_percentage"] * -1)
+                                                                            (num.parse((sdata[index]["weterper"] ?? 0).toString()) < num.parse((sdata[index]["temp_percentage"]).toString()) && num.parse((sdata[index]["weterper"] ?? 0).toString()) > num.parse((sdata[index]["temp_percentage"]).toString()) * -1)
                                                                                 ? Text(
-                                                                                    (sdata[sindex]['weterper']??0).toStringAsFixed(2) + " %",
+                                                                                    num.parse((sdata[sindex]['weterper'] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                     style: TextStyle(
                                                                                         fontFamily: Constants.popins,
                                                                                         decoration: TextDecoration.underline,
@@ -979,7 +1030,7 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                                                                                         fontSize: 12),
                                                                                   )
                                                                                 : Text(
-                                                                                    (sdata[sindex]['weterper']??0).toStringAsFixed(2) + " %",
+                                                                                    num.parse((sdata[sindex]['weterper'] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                     style: TextStyle(
                                                                                         fontFamily: Constants.popins,
                                                                                         decoration: TextDecoration.underline,
@@ -1005,681 +1056,611 @@ class _VIewMachinesState extends State<VIewMachines> with AutomaticKeepAliveClie
                               );
                             }))
                     : (machinedata.length == 0)
-                ? Container(
-              height: 500,
-              child: Center(
-                child: Text(
-                  "no machines found",
-                  style: TextStyle(
-                      fontFamily: Constants.popins,
-                      color: Constants.textColor,
-                      // fontWeight: FontWeight.w600,
-                      fontSize: 15),
-                ),
-              ),
-            )
-                :Expanded(
-                        child: ListView.builder(
-                            itemCount: machinedata.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: 5.0, left: 5, right: 5),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Constants.primaryColor,
-                                    borderRadius: const BorderRadius.all(
-                                        Radius.circular(15.0)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        spreadRadius: 2,
-                                        blurRadius: 3,
-                                        offset: const Offset(
-                                            0, 3), // changes position of shadow
+                        ? Container(
+                            height: 500,
+                            child: Center(
+                              child: Text(
+                                "no machines found",
+                                style: TextStyle(
+                                    fontFamily: Constants.popins,
+                                    color: Constants.textColor,
+                                    // fontWeight: FontWeight.w600,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          )
+                        : Expanded(
+                            child: ListView.builder(
+                                itemCount: machinedata.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 5.0, left: 5, right: 5),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Constants.primaryColor,
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(15.0)),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 2,
+                                            blurRadius: 3,
+                                            offset: const Offset(0,
+                                                3), // changes position of shadow
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 2, horizontal: 15),
-                                  child: ExpansionTile(
-                                    title: Container(),
-                                    subtitle: Container(
-                                      // color: Constants.secondaryColor,
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            // crossAxisAlignment: CrossAxisAlignment.start,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2, horizontal: 15),
+                                      child: ExpansionTile(
+                                        title: Container(),
+                                        subtitle: Container(
+                                          // color: Constants.secondaryColor,
+                                          child: Column(
                                             children: [
-                                              Text(
-                                                machinedata[index]['categories'],
-                                                style: TextStyle(
-                                                    fontFamily: Constants.popins,
-                                                    color: Colors.white,
-                                                    // fontWeight: FontWeight.w600,
-                                                    fontSize: 25),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                // crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    machinedata[index]
+                                                        ['categories'],
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        color: Colors.white,
+                                                        // fontWeight: FontWeight.w600,
+                                                        fontSize: 25),
+                                                  ),
+                                                ],
                                               ),
+                                              SizedBox(height: 10),
+                                              // Container(color: Colors.blue,width: w,height: 1,),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Container(
+                                                      width: w / 3,
+                                                      child: Column(
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "EM",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "HM",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "EM/HM",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0.00",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "%",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0.00 %",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      )),
+                                                  // SizedBox(width: 10),
+                                                  Container(
+                                                    color: Colors.white,
+                                                    width: 1,
+                                                    height: h / 15,
+                                                  ),
+                                                  // SizedBox(width: 10),
+                                                  Container(
+                                                      width: w / 3,
+                                                      child: Column(
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "Water",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "Batch",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "Water/Batch",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0.00",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "%",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                              Text(
+                                                                "0.00 %",
+                                                                style: TextStyle(
+                                                                    fontFamily: Constants.popins,
+                                                                    decoration: TextDecoration.underline,
+                                                                    color: Colors.white,
+                                                                    // color: Constants.textColor,
+                                                                    // fontWeight: FontWeight.w600,
+                                                                    fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      )),
+                                                ],
+                                              )
                                             ],
                                           ),
-                                          SizedBox(height: 10),
-                                          // Container(color: Colors.blue,width: w,height: 1,),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Container(
-                                                  width: w / 3,
-                                                  child: Column(
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "EM",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "HM",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "EM/HM",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0.00",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "%",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0.00 %",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  )),
-                                              // SizedBox(width: 10),
-                                              Container(
-                                                color: Colors.white,
-                                                width: 1,
-                                                height: h / 15,
-                                              ),
-                                              // SizedBox(width: 10),
-                                              Container(
-                                                  width: w / 3,
-                                                  child: Column(
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "Water",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "Batch",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "Water/Batch",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0.00",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          Text(
-                                                            "%",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                          Text(
-                                                            "0.00 %",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    Constants
-                                                                        .popins,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .underline,
-                                                                color:
-                                                                    Colors.white,
-                                                                // color: Constants.textColor,
-                                                                // fontWeight: FontWeight.w600,
-                                                                fontSize: 12),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  )),
-                                            ],
-                                          )
+                                        ),
+                                        children: <Widget>[
+                                          ListView.builder(
+                                              shrinkWrap: true,
+                                              physics:
+                                                  NeverScrollableScrollPhysics(),
+                                              itemCount: submachinedata.length,
+                                              itemBuilder: (context, sindex) {
+                                                return (machinedata[index]
+                                                            ['id'] ==
+                                                        submachinedata[sindex]
+                                                            ['categories_id'])
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .only(
+                                                                bottom: 5.0,
+                                                                left: 5,
+                                                                right: 5),
+                                                        child: Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.white,
+                                                              borderRadius:
+                                                                  const BorderRadius
+                                                                          .all(
+                                                                      Radius.circular(
+                                                                          15.0)),
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .withOpacity(
+                                                                          0.2),
+                                                                  spreadRadius:
+                                                                      2,
+                                                                  blurRadius: 3,
+                                                                  offset: const Offset(
+                                                                      0,
+                                                                      3), // changes position of shadow
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                        .symmetric(
+                                                                    vertical: 2,
+                                                                    horizontal:
+                                                                        15),
+                                                            child: Column(
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  // crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      submachinedata[sindex]
+                                                                              [
+                                                                              'sub_name']
+                                                                          .toString(),
+                                                                      style: TextStyle(
+                                                                          fontFamily: Constants.popins,
+                                                                          color: Colors.black,
+                                                                          // fontWeight: FontWeight.w600,
+                                                                          fontSize: 20),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(
+                                                                    height: 10),
+                                                                // Container(color: Colors.blue,width: w,height: 1,),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Container(
+                                                                        width: w /
+                                                                            3,
+                                                                        child:
+                                                                            Column(
+                                                                          children: [
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "EM",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "HM",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "EM/HM",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0.00",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "%",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0.00 %",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ],
+                                                                        )),
+                                                                    Container(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      width: 1,
+                                                                      height:
+                                                                          h / 15,
+                                                                    ),
+                                                                    Container(
+                                                                        width: w /
+                                                                            3,
+                                                                        child:
+                                                                            Column(
+                                                                          children: [
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "Water",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "Batch",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "Water/Batch",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  "%",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                                Text(
+                                                                                  "0.00 %",
+                                                                                  style: TextStyle(
+                                                                                      fontFamily: Constants.popins,
+                                                                                      decoration: TextDecoration.underline,
+                                                                                      color: Colors.black,
+                                                                                      // color: Constants.textColor,
+                                                                                      // fontWeight: FontWeight.w600,
+                                                                                      fontSize: 12),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ],
+                                                                        )),
+                                                                  ],
+                                                                )
+                                                              ],
+                                                            )),
+                                                      )
+                                                    : Container();
+                                              }),
                                         ],
                                       ),
                                     ),
-                                    children: <Widget>[
-                                      ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: NeverScrollableScrollPhysics(),
-                                          itemCount: submachinedata.length,
-                                          itemBuilder: (context, sindex) {
-                                            return (machinedata[index]['id'] ==
-                                                    submachinedata[sindex]
-                                                        ['categories_id'])
-                                                ? Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            bottom: 5.0,
-                                                            left: 5,
-                                                            right: 5),
-                                                    child: Container(
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          borderRadius:
-                                                              const BorderRadius
-                                                                      .all(
-                                                                  Radius.circular(
-                                                                      15.0)),
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Colors.grey
-                                                                  .withOpacity(
-                                                                      0.2),
-                                                              spreadRadius: 2,
-                                                              blurRadius: 3,
-                                                              offset: const Offset(
-                                                                  0,
-                                                                  3), // changes position of shadow
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        padding: const EdgeInsets
-                                                                .symmetric(
-                                                            vertical: 2,
-                                                            horizontal: 15),
-                                                        child: Column(
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              // crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Text(
-                                                                  submachinedata[
-                                                                              sindex]
-                                                                          [
-                                                                          'sub_name']
-                                                                      .toString(),
-                                                                  style: TextStyle(
-                                                                      fontFamily: Constants.popins,
-                                                                      color: Colors.black,
-                                                                      // fontWeight: FontWeight.w600,
-                                                                      fontSize: 20),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(height: 10),
-                                                            // Container(color: Colors.blue,width: w,height: 1,),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Container(
-                                                                    width: w / 3,
-                                                                    child: Column(
-                                                                      children: [
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "EM",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "HM",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "EM/HM",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0.00",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "%",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0.00 %",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ],
-                                                                    )),
-                                                                Container(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  width: 1,
-                                                                  height: h / 15,
-                                                                ),
-                                                                Container(
-                                                                    width: w / 3,
-                                                                    child: Column(
-                                                                      children: [
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "Water",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "Batch",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "Water/Batch",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Text(
-                                                                              "%",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                            Text(
-                                                                              "0.00 %",
-                                                                              style: TextStyle(
-                                                                                  fontFamily: Constants.popins,
-                                                                                  decoration: TextDecoration.underline,
-                                                                                  color: Colors.black,
-                                                                                  // color: Constants.textColor,
-                                                                                  // fontWeight: FontWeight.w600,
-                                                                                  fontSize: 12),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ],
-                                                                    )),
-                                                              ],
-                                                            )
-                                                          ],
-                                                        )),
-                                                  )
-                                                : Container();
-                                          }),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }))
+                                  );
+                                }))
           ],
         ),
       ),

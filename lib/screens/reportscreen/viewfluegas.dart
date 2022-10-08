@@ -153,7 +153,7 @@ class _ViewFlueSteamBoilerState extends State<ViewFlueSteamBoiler>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetFlueGasSteamBolierListingData/'),
+      Uri.parse('${Constants.weblink}GetFlueGasSteamBolierListingData/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -441,19 +441,19 @@ class _ViewFlueSteamBoilerState extends State<ViewFlueSteamBoiler>
                                                       ),
                                                       (num.parse((data[index][
                                                                           "value_pr"] ??
-                                                                      0)) <
-                                                                  data[index][
-                                                                      "deviation"] &&
+                                                                      0).toString()) <
+                                                                  num.parse((data[index][
+                                                                      "deviation"]).toString()) &&
                                                               num.parse((data[index]
                                                                           [
                                                                           "value_pr"] ??
-                                                                      0)) >
-                                                                  data[index][
-                                                                          "deviation"] *
+                                                                      0).toString()) >
+                                                                  num.parse((data[index][
+                                                                  "deviation"]).toString()) *
                                                                       -1)
                                                           ? Text(
-                                                              (data[index]['value_pr'] ??
-                                                                          0)
+                                                              num.parse((data[index]['value_pr'] ??
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -472,7 +472,7 @@ class _ViewFlueSteamBoilerState extends State<ViewFlueSteamBoiler>
                                                               num.parse((data[index]
                                                                               [
                                                                               'value_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -510,21 +510,21 @@ class _ViewFlueSteamBoilerState extends State<ViewFlueSteamBoiler>
                                                       ),
                                                       (num.parse((data[index][
                                                                           "temperature_pr"] ??
-                                                                      0)) <
-                                                                  data[index][
-                                                                      "temperature_deviation"] &&
-                                                              num.parse(data[index]
+                                                                      0).toString()) <
+                                                                  num.parse((data[index][
+                                                                      "temperature_deviation"]).toString()) &&
+                                                              num.parse((data[index]
                                                                           [
                                                                           "temperature_pr"] ??
-                                                                      0) >
-                                                                  data[index][
-                                                                          "temperature_deviation"] *
+                                                                      0).toString()) >
+                                                                  num.parse((data[index][
+                                                                  "temperature_deviation"]).toString()) *
                                                                       -1)
                                                           ? Text(
                                                               num.parse((data[index]
                                                                               [
                                                                               'temperature_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -543,7 +543,7 @@ class _ViewFlueSteamBoilerState extends State<ViewFlueSteamBoiler>
                                                               num.parse((data[index]
                                                                               [
                                                                               'temperature_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -877,7 +877,7 @@ class _ViewFlueThermoPackState extends State<ViewFlueThermoPack>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingData/'),
+      Uri.parse('${Constants.weblink}GetFlueGasThermoPackListingData/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -1164,21 +1164,21 @@ class _ViewFlueThermoPackState extends State<ViewFlueThermoPack>
                                                       ),
                                                       (num.parse((data[index][
                                                                           "value_pr"] ??
-                                                                      0)) <
-                                                                  data[index][
-                                                                      "deviation"] &&
+                                                                      0).toString()) <
+                                                                  num.parse((data[index][
+                                                                      "deviation"]).toString()) &&
                                                               num.parse((data[index]
                                                                           [
                                                                           "value_pr"] ??
-                                                                      0)) >
-                                                                  data[index][
-                                                                          "deviation"] *
+                                                                      0).toString()) >
+                                                                  num.parse((data[index][
+                                                                  "deviation"]).toString()) *
                                                                       -1)
                                                           ? Text(
                                                               num.parse((data[index]
                                                                               [
                                                                               'value_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -1197,7 +1197,7 @@ class _ViewFlueThermoPackState extends State<ViewFlueThermoPack>
                                                               num.parse((data[index]
                                                                               [
                                                                               'value_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -1235,21 +1235,21 @@ class _ViewFlueThermoPackState extends State<ViewFlueThermoPack>
                                                       ),
                                                       (num.parse((data[index][
                                                                           "temperature_pr"] ??
-                                                                      0)) <
-                                                                  data[index][
-                                                                      "temperature_deviation"] &&
+                                                                      0).toString()) <
+                                                                  num.parse((data[index][
+                                                                      "temperature_deviation"]).toString()) &&
                                                               num.parse((data[index]
                                                                           [
                                                                           "temperature_pr"] ??
-                                                                      0)) >
-                                                                  data[index][
-                                                                          "temperature_deviation"] *
+                                                                      0).toString()) >
+                                                                  num.parse((data[index][
+                                                                  "temperature_deviation"]).toString()) *
                                                                       -1)
                                                           ? Text(
                                                               num.parse((data[index]
                                                                               [
                                                                               'temperature_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",
@@ -1268,7 +1268,7 @@ class _ViewFlueThermoPackState extends State<ViewFlueThermoPack>
                                                               num.parse((data[index]
                                                                               [
                                                                               'temperature_pr'] ??
-                                                                          0))
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " %",

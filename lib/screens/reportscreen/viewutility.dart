@@ -107,7 +107,7 @@ class _ViewUtilityState extends State<ViewUtility>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtilityLisiting'),
+      Uri.parse('${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -121,7 +121,7 @@ class _ViewUtilityState extends State<ViewUtility>
       setState(() {
         isLoad = false;
       });
-      Constants.showtoast("Error Fetching Data.");
+      Constants.showtoast("Error Fetching Data this .");
     }
   }
 
@@ -129,7 +129,7 @@ class _ViewUtilityState extends State<ViewUtility>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList'),
+      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -345,7 +345,7 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            data[index]["em"]
+                                                            num.parse(data[index]["em"].toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -383,9 +383,9 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            (data[index][
+                                                            num.parse((data[index][
                                                                         "dev"] ??
-                                                                    0)
+                                                                    0).toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -435,7 +435,7 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            data[index]["hm"]
+                                                            num.parse(data[index]["hm"].toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -472,23 +472,23 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                         .w600,
                                                                 fontSize: 12),
                                                           ),
-                                                          ((data[index]["average"] ??
-                                                                          0) <
-                                                                      double.parse(
-                                                                          data[index]
+                                                          (num.parse((data[index]["average"] ??
+                                                                          0).toString()) <
+
+                                                                         num.parse( data[index]
                                                                               [
-                                                                              "devation"]) &&
-                                                                  (data[index][
+                                                                              "devation"].toString()) &&
+                                                                  num.parse((data[index][
                                                                               "average"] ??
-                                                                          0) >
-                                                                      double.parse(data[index]
-                                                                              [
-                                                                              "devation"]) *
+                                                                          0).toString()) >
+                                                                      num.parse( data[index]
+                                                                      [
+                                                                      "devation"].toString()) *
                                                                           -1)
                                                               ? Text(
-                                                                  (data[index][
+                                                                  num.parse((data[index][
                                                                               "average"] ??
-                                                                          0)
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) + " %",
                                                                   style: TextStyle(
@@ -500,9 +500,9 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                       fontSize: 12),
                                                                 )
                                                               : Text(
-                                                                  (data[index][
+                                                                  num.parse((data[index][
                                                                               "average"] ??
-                                                                          0)
+                                                                          0).toString())
                                                                       .toStringAsFixed(
                                                                           2) + " %",
                                                                   style: TextStyle(
@@ -639,7 +639,7 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                                 fontSize: 12),
                                                                           ),
                                                                           Text(
-                                                                            (sdata[sindex]["average"] ?? 0).toStringAsFixed(2),
+                                                                            num.parse((sdata[sindex]["average"] ?? 0).toString()).toStringAsFixed(2),
                                                                             style: TextStyle(
                                                                                 fontFamily: Constants.popins,
                                                                                 decoration: TextDecoration.underline,
@@ -702,9 +702,9 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                                 fontWeight: FontWeight.w600,
                                                                                 fontSize: 12),
                                                                           ),
-                                                                          (double.parse(submachinedeviation) < (sdata[index]["deviation"]) && double.parse(submachinedeviation) > (sdata[index]["deviation"]) * -1)
+                                                                          (num.parse(submachinedeviation.toString()) < num.parse(sdata[index]["deviation"].toString()) && num.parse(submachinedeviation.toString()) > num.parse(sdata[index]["deviation"].toString()) * -1)
                                                                               ? Text(
-                                                                                  (sdata[sindex]["dev"] ?? 0).toStringAsFixed(2) + " %",
+                                                                                  num.parse((sdata[sindex]["dev"] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                   style: TextStyle(
                                                                                       fontFamily: Constants.popins,
                                                                                       color: Colors.black,
@@ -714,7 +714,7 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                                       fontSize: 12),
                                                                                 )
                                                                               : Text(
-                                                                                  (sdata[sindex]["dev"] ?? 0).toStringAsFixed(2) + " %",
+                                                                                  num.parse((sdata[sindex]["dev"] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                   style: TextStyle(
                                                                                       fontFamily: Constants.popins,
                                                                                       color: Colors.red,

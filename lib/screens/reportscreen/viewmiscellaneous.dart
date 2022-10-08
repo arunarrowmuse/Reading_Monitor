@@ -82,7 +82,7 @@ class _ViewMiscState extends State<ViewMisc>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}MiscLisiting'),
+      Uri.parse('${Constants.weblink}MiscLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -304,14 +304,15 @@ class _ViewMiscState extends State<ViewMisc>
                                                   fontSize: 12),
                                             ),
                                             SizedBox(width: 30),
-                                            ((data[index]["dev"]??0) <
-                                                        data[index]
-                                                            ["deviation"] &&
-                                                    (data[index]["dev"]??0) >
-                                                        data[index]["deviation"] *
+                                            (num.parse((data[index]["dev"]??0).toString()) <
+                                                        num.parse((data[index]
+                                                            ["deviation"]).toString()) &&
+                                                num.parse((data[index]["dev"]??0).toString()) >
+                                                    num.parse((data[index]
+                                                    ["deviation"]).toString()) *
                                                             -1)
                                                 ? Text(
-                                                    "${(data[index]['dev']??0).toStringAsFixed(2)} %",
+                                                    "${num.parse((data[index]['dev']??0).toString()).toStringAsFixed(2)} %",
                                                     style: TextStyle(
                                                         decoration: TextDecoration
                                                             .underline,
@@ -320,7 +321,7 @@ class _ViewMiscState extends State<ViewMisc>
                                                         fontSize: 12),
                                                   )
                                                 : Text(
-                                                    "${(data[index]['dev']??0).toStringAsFixed(2)} %",
+                                                    "${num.parse((data[index]['dev']??0).toString()).toStringAsFixed(2)} %",
                                                     style: TextStyle(
                                                         decoration: TextDecoration
                                                             .underline,

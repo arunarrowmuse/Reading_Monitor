@@ -222,7 +222,7 @@ class _ViewGEBState extends State<ViewGEB>
                                               Radius.circular(8))),
                                       child: Center(
                                         child: Text(
-                                            (data[0]['kwhtotal']??0).toString(),
+                                            num.parse((data[0]['kwhtotal']??0).toString()).toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
                                                 fontFamily: Constants.popins,
@@ -253,7 +253,7 @@ class _ViewGEBState extends State<ViewGEB>
                                               Radius.circular(8))),
                                       child: Center(
                                         child: Text(
-                                            (data[0]['pf']??0).toStringAsFixed(2),
+                                            num.parse((data[0]['pf']??0).toString()).toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
                                                 fontFamily: Constants.popins,
@@ -283,7 +283,7 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: Text((data[0]['kvarh']??0).toString(),
+                                        child: Text(num.parse((data[0]['kvarh']??0).toString()).toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
                                                 fontFamily: Constants.popins,
@@ -314,7 +314,7 @@ class _ViewGEBState extends State<ViewGEB>
                                               Radius.circular(8))),
                                       child: Center(
                                         child: Text(
-                                            (data[0]['mdTotal']??0).toString(),
+                                            num.parse((data[0]['mdTotal']??0).toString()).toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
                                                 fontFamily: Constants.popins,
@@ -345,7 +345,7 @@ class _ViewGEBState extends State<ViewGEB>
                                               Radius.circular(8))),
                                       child: Center(
                                         child: Text(
-                                            data[0]['kevah'].toStringAsFixed(2),
+                                            num.parse((data[0]['kevah']).toString()).toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
                                                 fontFamily: Constants.popins,
@@ -376,7 +376,7 @@ class _ViewGEBState extends State<ViewGEB>
                                               Radius.circular(8))),
                                       child: Center(
                                         child: Text(
-                                            data[0]['turbine']
+                                            num.parse((data[0]['turbine']??0).toString())
                                                 .toStringAsFixed(2),
                                             style: TextStyle(
                                                 // color: Colors.grey,
@@ -410,13 +410,13 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["kwhtotalper"] ?? 0) <
-                                                    (data[0]["kwm_deviation"]??0) &&
-                                                (data[0]["kwhtotalper"] ?? 0) >
-                                                    (data[0]["kwm_deviation"]??0) *
+                                        child: ((num.parse((data[0]["kwhtotalper"] ?? 0).toString()) <
+                                                    num.parse((data[0]["kwm_deviation"]??0).toString()) &&
+                                            num.parse((data[0]["kwhtotalper"] ?? 0).toString()) >
+                                                num.parse((data[0]["kwm_deviation"]??0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['kwhtotalper'] ?? 0)
+                                            num.parse((data[0]['kwhtotalper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -425,7 +425,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['kwhtotalper'] ?? 0)
+                                                num.parse((data[0]['kwhtotalper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -459,13 +459,13 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["pfper"] ?? 0) <
-                                                    (data[0]["pf_deviation"]??0) &&
-                                                (data[0]["pfper"] ?? 0) >
-                                                    (data[0]["pf_deviation"]??0) *
+                                        child: ((num.parse((data[0]["pfper"] ?? 0).toString()) <
+                                                    num.parse((data[0]["pf_deviation"]??0).toString()) &&
+                                            num.parse((data[0]["pfper"] ?? 0).toString()) >
+                                                    num.parse((data[0]["pf_deviation"]??0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['pfper'] ?? 0)
+                                            num.parse((data[0]['pfper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -474,7 +474,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['pfper'] ?? 0)
+                                                num.parse((data[0]['pfper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -508,14 +508,15 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["kvarhper"] ?? 0) <
-                                                    (data[0]
-                                                        ["kvarsh_deviation"]??0) &&
-                                                (data[0]["kvarhper"] ?? 0) >
-                                                    (data[0]["kvarsh_deviation"]??0) *
+                                        child: ((num.parse((data[0]["kvarhper"] ?? 0).toString()) <
+                                                    num.parse((data[0]
+                                                        ["kvarsh_deviation"]??0).toString()) &&
+                                            num.parse((data[0]["kvarhper"] ?? 0).toString()) >
+                                                num.parse((data[0]
+                                                ["kvarsh_deviation"]??0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['kvarhper'] ?? 0)
+                                            num.parse((data[0]['kvarhper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -524,7 +525,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['kvarhper'] ?? 0)
+                                                num.parse((data[0]['kvarhper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -558,13 +559,13 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["mdper"] ?? 0) <
-                                                    (data[0]["md_deviation"]??0) &&
-                                                (data[0]["mdper"] ?? 0) >
-                                                    (data[0]["md_deviation"]??0) *
+                                        child: ((num.parse((data[0]["mdper"] ?? 0).toString()) <
+                                            num.parse((data[0]["md_deviation"]??0).toString()) &&
+                                            num.parse((data[0]["mdper"] ?? 0).toString()) >
+                                                    num.parse((data[0]["md_deviation"]??0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['mdper'] ?? 0)
+                                            num.parse((data[0]['mdper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -573,7 +574,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['mdper'] ?? 0)
+                                                num.parse((data[0]['mdper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -607,14 +608,15 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["kvahper"] ?? 0) <
-                                                    (data[0]
-                                                        ["kevah_deviation"]??0) &&
-                                                (data[0]["kvahper"] ?? 0) >
-                                                    (data[0]["kevah_deviation"]??0) *
+                                        child: ((num.parse((data[0]["kvahper"] ?? 0).toString()) <
+                                                    num.parse((data[0]
+                                                        ["kevah_deviation"]??0).toString()) &&
+                                            num.parse((data[0]["kvahper"] ?? 0).toString()) >
+                                                num.parse((data[0]
+                                                ["kevah_deviation"]??0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['kvahper'] ?? 0)
+                                            num.parse((data[0]['kvahper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -623,7 +625,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['kvahper'] ?? 0)
+                                                num.parse((data[0]['kvahper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -657,14 +659,15 @@ class _ViewGEBState extends State<ViewGEB>
                                           borderRadius: const BorderRadius.all(
                                               Radius.circular(8))),
                                       child: Center(
-                                        child: (((data[0]["turbineper"] ?? 0) <
-                                                    (data[0]["turbine_deviation"] ??
-                                                        0) &&
-                                                data[0]["turbineper"] >
-                                                    data[0]["turbine_deviation"] *
+                                        child: ((num.parse((data[0]["turbineper"] ?? 0).toString()) <
+                                                    num.parse((data[0]["turbine_deviation"] ??
+                                                        0).toString()) &&
+                                            num.parse((data[0]["turbineper"] ?? 0).toString()) >
+                                                    num.parse((data[0]["turbine_deviation"] ??
+                                                        0).toString()) *
                                                         -1))
                                             ? Text(
-                                                (data[0]['turbineper'] ?? 0)
+                                                num.parse((data[0]['turbineper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(
@@ -673,7 +676,7 @@ class _ViewGEBState extends State<ViewGEB>
                                                         Constants.popins,
                                                     fontSize: 14))
                                             : Text(
-                                                (data[0]['turbineper'] ?? 0)
+                                                num.parse((data[0]['turbineper'] ?? 0).toString())
                                                         .toStringAsFixed(2) +
                                                     " %",
                                                 style: TextStyle(

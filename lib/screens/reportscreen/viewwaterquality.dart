@@ -82,7 +82,7 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetWaterQualityLisiting'),
+      Uri.parse('${Constants.weblink}GetWaterQualityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -392,18 +392,18 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                               FontWeight.w600,
                                                           fontSize: 12),
                                                     ),
-                                                    ((data[index]["tds_per"]??0) <
+                                                    (num.parse((data[index]["tds_per"]??0).toString()) <
                                                                 num.parse(data[
                                                                         index][
-                                                                    'tds_percentage']) &&
-                                                            (data[index]["tds_per"]??0) >
+                                                                    'tds_percentage'].toString()) &&
+                                                            num.parse((data[index]["tds_per"]??0).toString()) >
                                                                 num.parse(data[
                                                                             index]
                                                                         [
-                                                                        'tds_percentage']) *
+                                                                        'tds_percentage'].toString()) *
                                                                     -1)
                                                         ? Text(
-                                                            (data[index]['tds_per']??0).toStringAsFixed(2) +" %",
+                                                      num.parse((data[index]['tds_per']??0).toString()).toStringAsFixed(2) + " %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
@@ -416,7 +416,7 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                                 fontSize: 12),
                                                           )
                                                         : Text(
-                                                            (data[index]['tds_per']??0).toStringAsFixed(2) + " %",
+                                                            num.parse((data[index]['tds_per']??0).toString()).toStringAsFixed(2) + " %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
@@ -447,18 +447,18 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                               FontWeight.w600,
                                                           fontSize: 12),
                                                     ),
-                                                    ((data[index]["ph_per"]??0) <
+                                                    (num.parse((data[index]["ph_per"]??0).toString()) <
                                                                 num.parse(data[
                                                                         index][
-                                                                    'ph_deviation']) &&
-                                                            (data[index]["ph_per"]??0) >
+                                                                    'ph_deviation'].toString()) &&
+                                                            num.parse((data[index]["ph_per"]??0).toString()) >
                                                                 num.parse(data[
                                                                             index]
                                                                         [
-                                                                        'ph_deviation']) *
+                                                                        'ph_deviation'].toString()) *
                                                                     -1)
                                                         ? Text(
-                                                            "${(data[index]['ph_per']??0).toStringAsFixed(2)} %",
+                                                      "${num.parse((data[index]['ph_per']??0).toString()).toStringAsFixed(2)} %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
@@ -471,7 +471,7 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                                 fontSize: 12),
                                                           )
                                                         : Text(
-                                                            "${(data[index]['ph_per']??0).toStringAsFixed(2)} %",
+                                                            "${num.parse((data[index]['ph_per']??0).toString()).toStringAsFixed(2)} %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
@@ -502,19 +502,20 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                               FontWeight.w600,
                                                           fontSize: 12),
                                                     ),
-                                                    ((data[index]['hardness_per']??0) <
+                                                    (num.parse((data[index]
+                                                    ['hardness_per']??0).toString()) <
                                                                 num.parse(data[
                                                                         index][
-                                                                    'hardness_percentag']) &&
-                                                            (data[index]
-                                                                    ['hardness_per']??0) >
+                                                                    'hardness_percentag'].toString()) &&
+                                                            num.parse((data[index]
+                                                                    ['hardness_per']??0).toString()) >
                                                                 num.parse(data[
                                                                             index]
                                                                         [
-                                                                        'hardness_percentag']) *
+                                                                        'hardness_percentag'].toString()) *
                                                                     -1)
                                                         ? Text(
-                                                            "${(data[index]['hardness_per']??0).toStringAsFixed(2)} %",
+                                                      "${num.parse((data[index]['hardness_per']??0).toString()).toStringAsFixed(2)} %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
@@ -527,7 +528,7 @@ class _ViewWaterQualityState extends State<ViewWaterQuality> with AutomaticKeepA
                                                                 fontSize: 12),
                                                           )
                                                         : Text(
-                                                            "${(data[index]['hardness_per']??0).toStringAsFixed(2)} %",
+                                                            "${num.parse((data[index]['hardness_per']??0).toString()).toStringAsFixed(2)} %",
                                                             style: TextStyle(
                                                                 fontFamily:
                                                                     Constants
