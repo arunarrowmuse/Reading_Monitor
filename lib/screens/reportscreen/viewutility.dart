@@ -107,7 +107,8 @@ class _ViewUtilityState extends State<ViewUtility>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
+      Uri.parse(
+          '${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -129,7 +130,8 @@ class _ViewUtilityState extends State<ViewUtility>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
+      Uri.parse(
+          '${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -345,7 +347,9 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            num.parse(data[index]["em"].toString())
+                                                            num.parse(data[index]
+                                                                        ["em"]
+                                                                    .toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -383,9 +387,11 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            num.parse((data[index][
-                                                                        "dev"] ??
-                                                                    0).toString())
+                                                            num.parse((data[index]
+                                                                            [
+                                                                            "dev"] ??
+                                                                        0)
+                                                                    .toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -435,7 +441,9 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           Text(
-                                                            num.parse(data[index]["hm"].toString())
+                                                            num.parse(data[index]
+                                                                        ["hm"]
+                                                                    .toString())
                                                                 .toStringAsFixed(
                                                                     2),
                                                             style: TextStyle(
@@ -473,24 +481,24 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                 fontSize: 12),
                                                           ),
                                                           (num.parse((data[index]["average"] ??
-                                                                          0).toString()) <
-
-                                                                         num.parse( data[index]
+                                                                              0)
+                                                                          .toString()) <
+                                                                      num.parse(data[index]
                                                                               [
-                                                                              "devation"].toString()) &&
-                                                                  num.parse((data[index][
-                                                                              "average"] ??
-                                                                          0).toString()) >
-                                                                      num.parse( data[index]
-                                                                      [
-                                                                      "devation"].toString()) *
+                                                                              "devation"]
+                                                                          .toString()) &&
+                                                                  num.parse((data[index]["average"] ??
+                                                                              0)
+                                                                          .toString()) >
+                                                                      num.parse(
+                                                                              data[index]["devation"].toString()) *
                                                                           -1)
                                                               ? Text(
-                                                                  num.parse((data[index][
-                                                                              "average"] ??
-                                                                          0).toString())
-                                                                      .toStringAsFixed(
-                                                                          2) + " %",
+                                                                  num.parse((data[index]["average"] ?? 0)
+                                                                              .toString())
+                                                                          .toStringAsFixed(
+                                                                              2) +
+                                                                      " %",
                                                                   style: TextStyle(
                                                                       fontFamily: Constants.popins,
                                                                       color: Colors.white,
@@ -500,11 +508,11 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                       fontSize: 12),
                                                                 )
                                                               : Text(
-                                                                  num.parse((data[index][
-                                                                              "average"] ??
-                                                                          0).toString())
-                                                                      .toStringAsFixed(
-                                                                          2) + " %",
+                                                                  num.parse((data[index]["average"] ?? 0)
+                                                                              .toString())
+                                                                          .toStringAsFixed(
+                                                                              2) +
+                                                                      " %",
                                                                   style: TextStyle(
                                                                       fontFamily: Constants.popins,
                                                                       color: Colors.red,
