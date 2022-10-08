@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool session = false;
   bool isLoad = false;
   List UserData = [];
+  bool _isObscure = true;
 
   void loginUser(String email, String password, bool storesession) async {
     setState(() {
@@ -287,11 +288,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                     validator: (value) => value!.isEmpty
                                         ? 'Password cannot be blank'
                                         : null,
-                                    obscureText: true,
+                                    obscureText: _isObscure,
                                     style: TextStyle(
                                       fontFamily: Constants.popins,
                                     ),
                                     decoration: InputDecoration(
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _isObscure ? Icons.visibility : Icons.visibility_off,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isObscure = !_isObscure;
+                                            });
+                                          },
+                                        ),
                                         contentPadding: const EdgeInsets.all(8),
                                         border: OutlineInputBorder(
                                           borderRadius:

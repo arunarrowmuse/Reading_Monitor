@@ -710,7 +710,7 @@ class _ViewUtilityState extends State<ViewUtility>
                                                                                 fontWeight: FontWeight.w600,
                                                                                 fontSize: 12),
                                                                           ),
-                                                                          (num.parse(submachinedeviation.toString()) < num.parse(sdata[index]["deviation"].toString()) && num.parse(submachinedeviation.toString()) > num.parse(sdata[index]["deviation"].toString()) * -1)
+                                                                          (num.parse(submachinedeviation.toString()) < num.parse((sdata[index]["deviation"]??0).toString()) && num.parse(submachinedeviation.toString()) > num.parse((sdata[index]["deviation"]??0).toString()) * -1)
                                                                               ? Text(
                                                                                   num.parse((sdata[sindex]["dev"] ?? 0).toString()).toStringAsFixed(2) + " %",
                                                                                   style: TextStyle(
