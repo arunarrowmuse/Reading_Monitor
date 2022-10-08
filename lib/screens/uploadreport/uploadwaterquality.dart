@@ -18,10 +18,10 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
   List<TextEditingController> TDSControllers = [];
   List<TextEditingController> PHControllers = [];
   List<TextEditingController> HardnessControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
-  var data;
+  var uploaddata;
   var listdata;
   late SharedPreferences prefs;
   String? tokenvalue;
@@ -51,13 +51,17 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
   }
 
   void FetchWaterList() async {
+    TDSControllers.clear();
+    PHControllers.clear();
+    HardnessControllers.clear();
+    IDControllers.clear();
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetWaterQualityLisiting'),
+      Uri.parse('${Constants.weblink}GetWaterQualityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -77,42 +81,44 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
         },
       );
       if (responses.statusCode == 200) {
-        data = jsonDecode(responses.body);
+        uploaddata = jsonDecode(responses.body);
         print(" upload data");
-        print(data.length);
-        print(data);
-        if (data.length == 0) {
+        print(uploaddata.length);
+        print(uploaddata);
+        if (uploaddata.length == 0) {
           for (int i = 0; i < listdata.length; i++) {
             var tdsController = TextEditingController(text: "");
             var phController = TextEditingController(text: "");
             var hardnessController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
             TDSControllers.add(tdsController);
             PHControllers.add(phController);
             HardnessControllers.add(hardnessController);
+            IDControllers.add(idController);
           }
         } else {
-          for (int i = 0; i < data.length; i++) {
-            if (i < data.length) {
-              var idController =
-                  TextEditingController(text: data[i]['id'].toString());
-              var tdsController =
-                  TextEditingController(text: data[i]['tds'].toString());
-              var phController =
-                  TextEditingController(text: data[i]['ph'].toString());
-              var hardnessController =
-                  TextEditingController(text: data[i]['hardness'].toString());
-              ValueID.add(idController);
-              TDSControllers.add(tdsController);
-              PHControllers.add(phController);
-              HardnessControllers.add(hardnessController);
-            } else {
-              var tdsController = TextEditingController(text: "0");
-              var phController = TextEditingController(text: "0");
-              var hardnessController = TextEditingController(text: "0");
-              TDSControllers.add(tdsController);
-              PHControllers.add(phController);
-              HardnessControllers.add(hardnessController);
+          for (int i = 0; i < listdata.length; i++) {
+            var tdsController = TextEditingController(text: "");
+            var phController = TextEditingController(text: "");
+            var hardnessController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
+            for (int j = 0; j < uploaddata.length; j++) {
+              if (listdata[i]['id'] ==
+                  uploaddata[j]['machine_name_id']){
+                 idController =
+                TextEditingController(text: uploaddata[j]['id'].toString());
+                 tdsController =
+                TextEditingController(text: uploaddata[j]['tds'].toString());
+                 phController =
+                TextEditingController(text: uploaddata[j]['ph'].toString());
+                 hardnessController =
+                TextEditingController(text: uploaddata[j]['hardness'].toString());
+              }
             }
+            TDSControllers.add(tdsController);
+            PHControllers.add(phController);
+            HardnessControllers.add(hardnessController);
+            IDControllers.add(idController);
           }
         }
         setState(() {
@@ -131,8 +137,9 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
     }
   }
 
-  void AddWaterList() async {
-    for (int i = 0; i < listdata.length; i++) {
+  void AddWaterList(int i) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
       String tds = "0";
       String ph = "0";
       String hardness = "0";
@@ -161,23 +168,24 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
         }),
       );
       if (response.statusCode == 200) {
-        data = jsonDecode(response.body);
-        if (i == listdata.length - 1) {
+        // uploaddata = jsonDecode(response.body);
+        // if (i == listdata.length - 1) {
           Constants.showtoast("Report Added!");
           Utils(context).stopLoading();
-        }
+        // }
       } else {
         print(response.statusCode);
         print(response.body);
         Utils(context).stopLoading();
         Constants.showtoast("Error Updating Data.");
       }
-    }
+    // }
     FetchWaterList();
   }
 
-  void UpdateWaterList() async {
-    for (int i = 0; i < listdata.length; i++) {
+  void UpdateWaterList(int i, String id ) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
       String tds = "0";
       String ph = "0";
       String hardness = "0";
@@ -192,7 +200,7 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
       }
       final response = await http.post(
         Uri.parse(
-            '${Constants.weblink}GetWaterQualityReportUploadUpdated/${data[i]['id']}'),
+            '${Constants.weblink}GetWaterQualityReportUploadUpdated/$id'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $tokenvalue',
@@ -207,17 +215,15 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
         }),
       );
       if (response.statusCode == 200) {
-        if (i == listdata.length - 1) {
           Constants.showtoast("Report Updated!");
           Utils(context).stopLoading();
-        }
       } else {
         print(response.statusCode);
         print(response.body);
         Utils(context).stopLoading();
         Constants.showtoast("Error Updating Data.");
       }
-    }
+    // }
     FetchWaterList();
   }
 
@@ -281,38 +287,6 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
                             )),
                         // Icon(Icons.l, color: Colors.white,),
                       ],
-                    ),
-                    Container(
-                      height: 30,
-                      padding: const EdgeInsets.only(right: 15.0),
-                      // width: 100,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Utils(context).startLoading();
-                          if (data.length == 0) {
-                            AddWaterList();
-                          } else {
-                            UpdateWaterList();
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                Constants.primaryColor)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(" Sumbit  ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                            Image.asset(
-                              "assets/icons/Edit.png",
-                              height: 16,
-                            )
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -380,6 +354,46 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
                                               color: Constants.textColor,
                                               fontWeight: FontWeight.w600,
                                               fontSize: 15),
+                                        ),
+                                        Container(
+                                          height: 30,
+                                          padding:
+                                          const EdgeInsets.only(right: 15.0),
+                                          // width: 100,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              // Utils(context).startLoading();
+                                              if (IDControllers[index].text ==
+                                                  "0") {
+                                                AddWaterList(index);
+                                              } else {
+                                                UpdateWaterList(index,
+                                                    IDControllers[index].text);
+                                              }
+                                            },
+                                            style: ButtonStyle(
+                                                backgroundColor:
+                                                MaterialStateProperty.all<
+                                                    Color>(
+                                                    Constants.primaryColor)),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                              children: [
+                                                Text(" Sumbit  ",
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontFamily:
+                                                        Constants.popins,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 12)),
+                                                // Image.asset(
+                                                //   "assets/icons/Edit.png",
+                                                //   height: 16,
+                                                // )
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),

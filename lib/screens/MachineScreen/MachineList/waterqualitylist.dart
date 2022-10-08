@@ -38,7 +38,7 @@ class _WaterQualityListState extends State<WaterQualityList> with AutomaticKeepA
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetWaterQualityLisiting'),
+      Uri.parse('${Constants.weblink}GetWaterQualityLisiting/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',

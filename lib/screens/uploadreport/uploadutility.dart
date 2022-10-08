@@ -17,7 +17,7 @@ class _UploadUtilityState extends State<UploadUtility>
     with AutomaticKeepAliveClientMixin<UploadUtility> {
   List<TextEditingController> EMControllers = [];
   List<TextEditingController> HMControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   bool isLoad = false;
   var uploaddata;
   var subcatdata;
@@ -50,13 +50,17 @@ class _UploadUtilityState extends State<UploadUtility>
   }
 
   void FetchUtilityList() async {
+    EMControllers.clear();
+    HMControllers.clear();
+    IDControllers.clear();
+    print("the seleced date is  ${selectedDate.toString()}");
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final responsed = await http.get(
-      Uri.parse('${Constants.weblink}GetUtilityLisiting'),
+      Uri.parse('${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -67,7 +71,7 @@ class _UploadUtilityState extends State<UploadUtility>
       print("machine name");
       print(maindata);
       final response = await http.get(
-        Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList'),
+        Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $tokenvalue',
@@ -75,7 +79,7 @@ class _UploadUtilityState extends State<UploadUtility>
       );
       if (response.statusCode == 200) {
         subcatdata = jsonDecode(response.body);
-        print("machine list");
+        print(" sub machine list");
         print(subcatdata.length);
         print(subcatdata);
         final responses = await http.get(
@@ -95,40 +99,36 @@ class _UploadUtilityState extends State<UploadUtility>
             for (int i = 0; i < subcatdata.length; i++) {
               var emController = TextEditingController(text: "");
               var hmController = TextEditingController(text: "");
+              var idController = TextEditingController(text: "0");
               EMControllers.add(emController);
               HMControllers.add(hmController);
+              IDControllers.add(idController);
             }
           } else {
-            for (int i = 0; i < uploaddata.length; i++) {
-              var idController =
-                  TextEditingController(text: uploaddata[i]['id'].toString());
-              if (uploaddata[i]['em'].toString() == "null") {
-                var emController = TextEditingController(text: "");
-                EMControllers.add(emController);
-              } else {
-                var emController =
-                    TextEditingController(text: uploaddata[i]['em'].toString());
-                EMControllers.add(emController);
+            for (int i = 0; i < subcatdata.length; i++) {
+              var emController = TextEditingController(text: "");
+              var hmController = TextEditingController(text: "");
+              var idController = TextEditingController(text: "0");
+              for (int j = 0; j < uploaddata.length; j++) {
+                if (subcatdata[i]['id'] ==
+                    uploaddata[j]['uitility_subcategories_id']) {
+                  emController =
+                      TextEditingController(text: uploaddata[j]['em']);
+                  hmController =
+                      TextEditingController(text: uploaddata[j]['hm']);
+                  idController = TextEditingController(
+                      text: uploaddata[j]['id'].toString());
+                }
               }
-              if (uploaddata[i]['hm'].toString() == "null") {
-                var hmController = TextEditingController(text: "");
-                HMControllers.add(hmController);
-              } else {
-                var hmController =
-                    TextEditingController(text: uploaddata[i]['hm'].toString());
-                HMControllers.add(hmController);
-              }
-              ValueID.add(idController);
-              // EMControllers.add(emController);
-
+              EMControllers.add(emController);
+              HMControllers.add(hmController);
+              IDControllers.add(idController);
             }
           }
           setState(() {
             isLoad = false;
           });
         } else {
-          print(responses.statusCode);
-          print(responses.body);
           setState(() {
             isLoad = false;
           });
@@ -138,8 +138,6 @@ class _UploadUtilityState extends State<UploadUtility>
         Constants.showtoast("Error Fetching Data.");
       }
     } else {
-      print(responsed.statusCode);
-      print(responsed.body);
       setState(() {
         isLoad = false;
       });
@@ -147,95 +145,80 @@ class _UploadUtilityState extends State<UploadUtility>
     }
   }
 
-  void AddUtilityList() async {
-    for (int i = 0; i < subcatdata.length; i++) {
-      String emvalue;
-      String hmvalue;
-      // print(uploaddata[i]['id']);
-      print(EMControllers[i].text);
-      print(HMControllers[i].text);
-      if (EMControllers[i].text == "") {
-        emvalue = "0";
-      } else {
-        emvalue = EMControllers[i].text;
-      }
-      if (HMControllers[i].text == "") {
-        hmvalue = "0";
-      } else {
-        hmvalue = HMControllers[i].text;
-      }
-      final response = await http.post(
-        Uri.parse('${Constants.weblink}GetUtiltiReportUploadQueryAdd'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "uitility_categories_id":
-              subcatdata[i]["uitility_categories_id"].toString(),
-          "uitility_subcategories_id": subcatdata[i]["id"].toString(),
-          "date": selectedDate.toString().split(" ")[0],
-          "em": emvalue,
-          "hm": hmvalue
-        }),
-      );
-      if (response.statusCode == 200) {
-        if (i == subcatdata.length - 1) {
-          Constants.showtoast("Report Added!");
-          Utils(context).stopLoading();
-        }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        // Utils(context).showError();
-        Utils(context).stopLoading();
-      }
+  void AddUtilityList(int i) async {
+    Utils(context).startLoading();
+    String emvalue;
+    String hmvalue;
+    if (EMControllers[i].text == "") {
+      emvalue = "0";
+    } else {
+      emvalue = EMControllers[i].text;
+    }
+    if (HMControllers[i].text == "") {
+      hmvalue = "0";
+    } else {
+      hmvalue = HMControllers[i].text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}GetUtiltiReportUploadQueryAdd'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "uitility_categories_id":
+            subcatdata[i]["uitility_categories_id"].toString(),
+        "uitility_subcategories_id": subcatdata[i]["id"].toString(),
+        "date": selectedDate.toString().split(" ")[0],
+        "em": emvalue,
+        "hm": hmvalue
+      }),
+    );
+    if (response.statusCode == 200) {
+        Constants.showtoast("Report Added!");
+      Utils(context).stopLoading();
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
     }
     FetchUtilityList();
   }
 
-  void UpdateUtilityList() async {
-    for (int i = 0; i < subcatdata.length; i++) {
-      String emvalue;
-      String hmvalue;
-      print(uploaddata[i]['id']);
-      print(EMControllers[i].text);
-      print(HMControllers[i].text);
-      if (EMControllers[i].text == "") {
-        emvalue = "0";
-      } else {
-        emvalue = EMControllers[i].text;
-      }
-      if (HMControllers[i].text == "") {
-        hmvalue = "0";
-      } else {
-        hmvalue = HMControllers[i].text;
-      }
-      final response = await http.put(
-        Uri.parse(
-            '${Constants.weblink}GetUtiltiReportUploadQueryUpdated/${uploaddata[i]["id"].toString()}'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          // '_method' : "PUT",
-          "em": emvalue,
-          "hm": hmvalue
-        }),
-      );
-      if (response.statusCode == 200) {
-        if (i == subcatdata.length - 1) {
-          Constants.showtoast("Report Updated!");
-          Utils(context).stopLoading();
-        }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        Utils(context).stopLoading();
-      }
+  void UpdateUtilityList(int i, String id) async {
+    Utils(context).startLoading();
+    String emvalue;
+    String hmvalue;
+    if (EMControllers[i].text == "") {
+      emvalue = "0";
+    } else {
+      emvalue = EMControllers[i].text;
+    }
+    if (HMControllers[i].text == "") {
+      hmvalue = "0";
+    } else {
+      hmvalue = HMControllers[i].text;
+    }
+    final response = await http.put(
+      Uri.parse('${Constants.weblink}GetUtiltiReportUploadQueryUpdated/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "em": emvalue,
+        "hm": hmvalue
+      }),
+    );
+    if (response.statusCode == 200) {
+        Constants.showtoast("Report Updated!");
+      Utils(context).stopLoading();
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
     }
     FetchUtilityList();
   }
@@ -300,43 +283,43 @@ class _UploadUtilityState extends State<UploadUtility>
                         // Icon(Icons.l, color: Colors.white,),
                       ],
                     ),
-                    Container(
-                      height: 30,
-                      padding: const EdgeInsets.only(right: 15.0),
-                      // width: 100,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Utils(context).startLoading();
-                          if (uploaddata.length == 0) {
-                            AddUtilityList();
-                          } else {
-                            UpdateUtilityList();
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                Constants.primaryColor)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(" Sumbit  ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                            Image.asset(
-                              "assets/icons/Edit.png",
-                              height: 16,
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
+                    // Container(
+                    //   height: 30,
+                    //   padding: const EdgeInsets.only(right: 15.0),
+                    //   // width: 100,
+                    //   child: ElevatedButton(
+                    //     onPressed: () {
+                    //       // Utils(context).startLoading();
+                    //       // if (uploaddata.length == 0) {
+                    //       //   AddUtilityList();
+                    //       // } else {
+                    //       //   UpdateUtilityList();
+                    //       // }
+                    //     },
+                    //     style: ButtonStyle(
+                    //         backgroundColor: MaterialStateProperty.all<Color>(
+                    //             Constants.primaryColor)),
+                    //     child: Row(
+                    //       crossAxisAlignment: CrossAxisAlignment.center,
+                    //       children: [
+                    //         Text(" Sumbit  ",
+                    //             style: TextStyle(
+                    //                 color: Colors.white,
+                    //                 fontFamily: Constants.popins,
+                    //                 fontSize: 14)),
+                    //         Image.asset(
+                    //           "assets/icons/Edit.png",
+                    //           height: 16,
+                    //         )
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            // const SizedBox(height: 20),
             (isLoad == true)
                 ? SizedBox(
                     height: 500,
@@ -372,34 +355,84 @@ class _UploadUtilityState extends State<UploadUtility>
                             child: Column(
                               children: [
                                 Row(
-                                  // mainAxisAlignment:
-                                  //     MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    for (var item in maindata)
-                                      (item['id'].toString() ==
-                                              subcatdata[index]
-                                                      ['uitility_categories_id']
-                                                  .toString())
-                                          ? Text(
-                                              item['uitility_categories']
-                                                      .toString() +
-                                                  "  : ",
-                                              style: TextStyle(
-                                                  fontFamily: Constants.popins,
-                                                  color: Constants.textColor,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15),
-                                            )
-                                          : Container(),
-                                    Text(
-                                      subcatdata[index]['uilitysubc_name']
-                                          .toString(),
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
+                                    Row(
+                                      // mainAxisAlignment:
+                                      //     MainAxisAlignment.spaceBetween,
+                                      // crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        for (var item in maindata)
+                                          (item['id'].toString() ==
+                                                  subcatdata[index][
+                                                          'uitility_categories_id']
+                                                      .toString())
+                                              ? Text(
+                                                  item['uitility_categories']
+                                                          .toString() +
+                                                      "  : ",
+                                                  style: TextStyle(
+                                                      fontFamily:
+                                                          Constants.popins,
+                                                      color:
+                                                          Constants.textColor,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 15),
+                                                )
+                                              : Container(),
+                                        Text(
+                                          subcatdata[index]['uilitysubc_name']
+                                              .toString(),
+                                          style: TextStyle(
+                                              fontFamily: Constants.popins,
+                                              color: Constants.textColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      height: 30,
+                                      padding:
+                                          const EdgeInsets.only(right: 15.0),
+                                      // width: 100,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          // Utils(context).startLoading();
+                                          if (IDControllers[index].text ==
+                                              "0") {
+                                            AddUtilityList(index);
+                                          } else {
+
+                                            UpdateUtilityList(index,
+                                                IDControllers[index].text);
+                                          }
+                                        },
+                                        style: ButtonStyle(
+                                            backgroundColor:
+                                                MaterialStateProperty.all<
+                                                        Color>(
+                                                    Constants.primaryColor)),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(" Sumbit  ",
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontFamily:
+                                                        Constants.popins,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12)),
+                                            // Image.asset(
+                                            //   "assets/icons/Edit.png",
+                                            //   height: 16,
+                                            // )
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),

@@ -17,10 +17,10 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
     with AutomaticKeepAliveClientMixin<UploadSupplyPump> {
   List<TextEditingController> FlowControllers = [];
   List<TextEditingController> UnitControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
-  var data;
+  var uploaddata;
   var listdata;
   late SharedPreferences prefs;
   String? tokenvalue;
@@ -49,13 +49,16 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
   }
 
   void FetchSupplyList() async {
+    FlowControllers.clear();
+    UnitControllers.clear();
+    IDControllers.clear();
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetSupplyPumpListing'),
+      Uri.parse('${Constants.weblink}GetSupplyPumpListing/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -75,36 +78,37 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
         },
       );
       if (responses.statusCode == 200) {
-        data = jsonDecode(responses.body);
+        uploaddata = jsonDecode(responses.body);
         print(" upload data");
-        print(data.length);
-        print(data);
-        if (data.length == 0) {
+        print(uploaddata.length);
+        print(uploaddata);
+        if (uploaddata.length == 0) {
           for (int i = 0; i < listdata.length; i++) {
             var flowController = TextEditingController(text: "");
             var unitController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
             FlowControllers.add(flowController);
             UnitControllers.add(unitController);
+            IDControllers.add(idController);
           }
         } else {
-          for (int i = 0; i < data.length; i++) {
-            if (i < data.length) {
-              var idController =
-                  TextEditingController(text: data[i]['id'].toString());
-              var flowController =
-                  TextEditingController(text: data[i]['flow'].toString());
-              var unitController =
-                  TextEditingController(text: data[i]['unit'].toString());
-              ValueID.add(idController);
-              FlowControllers.add(flowController);
-              UnitControllers.add(unitController);
-            } else {
-              // print("without data");
-              var flowController = TextEditingController(text: "0");
-              var unitController = TextEditingController(text: "0");
-              FlowControllers.add(flowController);
-              UnitControllers.add(unitController);
+          for (int i = 0; i < listdata.length; i++) {
+            var flowController = TextEditingController(text: "");
+            var unitController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
+            for (int j = 0; j < uploaddata.length; j++) {
+              if (listdata[i]['id'] == uploaddata[j]['supplyp_name_id']) {
+                idController =
+                    TextEditingController(text: uploaddata[j]['id'].toString());
+                flowController = TextEditingController(
+                    text: uploaddata[j]['flow'].toString());
+                unitController = TextEditingController(
+                    text: uploaddata[j]['unit'].toString());
+              }
             }
+            IDControllers.add(idController);
+            FlowControllers.add(flowController);
+            UnitControllers.add(unitController);
           }
         }
         setState(() {
@@ -123,83 +127,80 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
     }
   }
 
-  void AddSupplyList() async {
-
-    for (int i = 0; i < listdata.length; i++) {
-      String flow= "0";
-      String unit= "0";
-      if (FlowControllers[i].text != "") {
-        flow = FlowControllers[i].text;
-      }
-      if (UnitControllers[i].text != "") {
-        unit = UnitControllers[i].text ;
-      }
-      final response = await http.post(
-        Uri.parse('${Constants.weblink}GetSupplyPumpReportUploadAdd'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "date": selectedDate.toString().split(" ")[0],
-          "supplyp_name_id": listdata[i]["id"].toString(),
-          "flow": flow,
-          "unit": unit
-        }),
-      );
-      if (response.statusCode == 200) {
-        // data = jsonDecode(response.body);
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Added!");
-          Utils(context).stopLoading();
-        }
-        // Constants.showtoast("Report Updated!");
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Utils(context).stopLoading();
-        Constants.showtoast("Error Updating Data.");
-      }
+  void AddSupplyList(int i) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String flow = "0";
+    String unit = "0";
+    if (FlowControllers[i].text != "") {
+      flow = FlowControllers[i].text;
     }
+    if (UnitControllers[i].text != "") {
+      unit = UnitControllers[i].text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}GetSupplyPumpReportUploadAdd'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "date": selectedDate.toString().split(" ")[0],
+        "supplyp_name_id": listdata[i]["id"].toString(),
+        "flow": flow,
+        "unit": unit
+      }),
+    );
+    if (response.statusCode == 200) {
+      // data = jsonDecode(response.body);
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Added!");
+      Utils(context).stopLoading();
+      // }
+      // Constants.showtoast("Report Updated!");
+    } else {
+      // print(response.statusCode);
+      // print(response.body);
+      Utils(context).stopLoading();
+      Constants.showtoast("Error Updating Data.");
+    }
+    // }
     FetchSupplyList();
   }
 
-  void UpdateSupplyList() async {
-    for (int i = 0; i < listdata.length; i++) {
-      String flow= "0";
-      String unit= "0";
-      if (FlowControllers[i].text != "") {
-        flow = FlowControllers[i].text;
-      }
-      if (UnitControllers[i].text != "") {
-        unit = UnitControllers[i].text ;
-      }
-      final response = await http.put(
-        Uri.parse(
-            '${Constants.weblink}SupplyPumpReportUploadUpdated/${data[i]['id']}'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "flow": flow,
-          "unit": unit
-        }),
-      );
-      if (response.statusCode == 200) {
-        // data = jsonDecode(response.body);
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Updated!");
-          Utils(context).stopLoading();
-        }
-        // Constants.showtoast("Report Updated!");
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Utils(context).stopLoading();
-        Constants.showtoast("Error Updating Data.");
-      }
+  void UpdateSupplyList(int i, String id) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String flow = "0";
+    String unit = "0";
+    if (FlowControllers[i].text != "") {
+      flow = FlowControllers[i].text;
     }
+    if (UnitControllers[i].text != "") {
+      unit = UnitControllers[i].text;
+    }
+    final response = await http.put(
+      Uri.parse('${Constants.weblink}SupplyPumpReportUploadUpdated/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{"flow": flow, "unit": unit}),
+    );
+    if (response.statusCode == 200) {
+      // data = jsonDecode(response.body);
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Updated!");
+      Utils(context).stopLoading();
+      // }
+      // Constants.showtoast("Report Updated!");
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Utils(context).stopLoading();
+      Constants.showtoast("Error Updating Data.");
+    }
+    // }
     FetchSupplyList();
   }
 
@@ -263,38 +264,6 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
                             )),
                         // Icon(Icons.l, color: Colors.white,),
                       ],
-                    ),
-                    Container(
-                      height: 30,
-                      padding: const EdgeInsets.only(right: 15.0),
-                      // width: 100,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Utils(context).startLoading();
-                          if (data.length == 0) {
-                            AddSupplyList();
-                          } else {
-                            UpdateSupplyList();
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                Constants.primaryColor)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(" Sumbit  ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                            Image.asset(
-                              "assets/icons/Edit.png",
-                              height: 16,
-                            )
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -361,6 +330,41 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
                                               color: Constants.textColor,
                                               fontWeight: FontWeight.w600,
                                               fontSize: 15),
+                                        ),
+                                        Container(
+                                          height: 30,
+                                          padding: const EdgeInsets.only(
+                                              right: 15.0),
+                                          // width: 100,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              if (IDControllers[index].text ==
+                                                  "0") {
+                                                AddSupplyList(index);
+                                              } else {
+                                                UpdateSupplyList(index,
+                                                    IDControllers[index].text);
+                                              }
+
+                                            },
+                                            style: ButtonStyle(
+                                                backgroundColor:
+                                                    MaterialStateProperty
+                                                        .all<Color>(Constants
+                                                            .primaryColor)),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text(" Sumbit  ",
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontFamily:
+                                                            Constants.popins,
+                                                        fontSize: 14)),
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),

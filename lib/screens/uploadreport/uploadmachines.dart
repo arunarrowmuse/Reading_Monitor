@@ -19,7 +19,7 @@ class _UploadMachinesState extends State<UploadMachines>
   List<TextEditingController> HMControllers = [];
   List<TextEditingController> WaterControllers = [];
   List<TextEditingController> BatchControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   bool isLoad = false;
   var uploaddata;
   var subcatdata;
@@ -54,13 +54,18 @@ class _UploadMachinesState extends State<UploadMachines>
   }
 
   void FetchMachinesList() async {
+    EMControllers.clear();
+    HMControllers.clear();
+    WaterControllers.clear();
+    BatchControllers.clear();
+    IDControllers.clear();
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final responsed = await http.get(
-      Uri.parse('${Constants.weblink}GetMachineCategoriesListing'),
+      Uri.parse('${Constants.weblink}GetMachineCategoriesListing/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -71,7 +76,7 @@ class _UploadMachinesState extends State<UploadMachines>
       print("machine name");
       print(maindata);
       final response = await http.get(
-        Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing'),
+        Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing/${selectedDate.toString().split(" ")[0]}'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $tokenvalue',
@@ -101,62 +106,51 @@ class _UploadMachinesState extends State<UploadMachines>
               var hmController = TextEditingController(text: "");
               var waterController = TextEditingController(text: "");
               var batchController = TextEditingController(text: "");
+              var idController = TextEditingController(text: "0");
               EMControllers.add(emController);
               HMControllers.add(hmController);
               WaterControllers.add(waterController);
               BatchControllers.add(batchController);
+              IDControllers.add(idController);
             }
           } else {
-            for (int i = 0; i < uploaddata.length; i++) {
-              if (i < subcatdata.length) {
-                // print("with data");
-                var idController =
-                    TextEditingController(text: uploaddata[i]['id'].toString());
-                if (uploaddata[i]['em'].toString() == "null") {
-                  var emController = TextEditingController(text: "");
-                  EMControllers.add(emController);
-                } else {
-                  var emController = TextEditingController(
+            for (int i = 0; i < subcatdata.length; i++) {
+              var emController = TextEditingController(text: "");
+              var hmController = TextEditingController(text: "");
+              var waterController = TextEditingController(text: "");
+              var batchController = TextEditingController(text: "");
+              var idController = TextEditingController(text: "0");
+              for (int j = 0; j < uploaddata.length; j++) {
+                if (subcatdata[i]['id'] ==
+                    uploaddata[j]['sub_categories_id']){
+                  emController = TextEditingController(
                       text: uploaddata[i]['em'].toString());
-                  EMControllers.add(emController);
-                }
-                if (uploaddata[i]['hm'].toString() == "null") {
-                  var hmController = TextEditingController(text: "");
-                  HMControllers.add(hmController);
-                } else {
-                  var hmController = TextEditingController(
+                  hmController = TextEditingController(
                       text: uploaddata[i]['hm'].toString());
-                  HMControllers.add(hmController);
-                }
-                if (uploaddata[i]['water'].toString() == "null") {
-                  var waterController = TextEditingController(text: "");
-                  WaterControllers.add(waterController);
-                } else {
-                  var waterController = TextEditingController(
+                  waterController = TextEditingController(
                       text: uploaddata[i]['water'].toString());
-                  WaterControllers.add(waterController);
-                }
-                if (uploaddata[i]['batch'].toString() == "null") {
-                  var batchController = TextEditingController(text: "");
-                  BatchControllers.add(batchController);
-                } else {
-                  var batchController = TextEditingController(
+                  batchController = TextEditingController(
                       text: uploaddata[i]['batch'].toString());
-                  BatchControllers.add(batchController);
+                  idController = TextEditingController(
+                      text: uploaddata[j]['id'].toString());
                 }
-
-                ValueID.add(idController);
-              } else {
-                // print("without data");
-                var emController = TextEditingController(text: "0");
-                var hmController = TextEditingController(text: "0");
-                var waterController = TextEditingController(text: "0");
-                var batchController = TextEditingController(text: "0");
-                EMControllers.add(emController);
-                HMControllers.add(hmController);
-                WaterControllers.add(waterController);
-                BatchControllers.add(batchController);
               }
+              EMControllers.add(emController);
+              HMControllers.add(hmController);
+              WaterControllers.add(waterController);
+              BatchControllers.add(batchController);
+              IDControllers.add(idController);
+
+              ///////////////////HANDLING NULL (NOT POSSIBLE RN)///////////////////
+            //  if (uploaddata[i]['em'].toString() == "null") {
+           //     var emController = TextEditingController(text: "");
+           //     EMControllers.add(emController);
+           //   } else {
+             //   var emController = TextEditingController(
+           //         text: uploaddata[i]['em'].toString());
+           //     EMControllers.add(emController);
+          //    }
+              ////////////////////////////////////////////////////
             }
           }
           setState(() {
@@ -183,8 +177,8 @@ class _UploadMachinesState extends State<UploadMachines>
     }
   }
 
-  void AddMachinesList() async {
-    for (int i = 0; i < subcatdata.length; i++) {
+  void AddMachinesList(int i) async {
+    Utils(context).startLoading();
       String emvalue = "0";
       String hmvalue = "0";
       String water = "0";
@@ -218,24 +212,17 @@ class _UploadMachinesState extends State<UploadMachines>
         }),
       );
       if (response.statusCode == 200) {
-        // data = jsonDecode(response.body);
-        if (i == subcatdata.length - 1) {
           Constants.showtoast("Report Added!");
           Utils(context).stopLoading();
-        }
-        // Constants.showtoast("Report Updated!");
       } else {
-        print(response.statusCode);
-        print(response.body);
         Utils(context).stopLoading();
         Constants.showtoast("Error Adding Data.");
       }
-    }
     FetchMachinesList();
   }
 
-  void UpdateMachinesList() async {
-    for (int i = 0; i < subcatdata.length; i++) {
+  void UpdateMachinesList(int i, String id) async {
+    Utils(context).startLoading();
       String emvalue = "0";
       String hmvalue = "0";
       String water = "0";
@@ -254,7 +241,7 @@ class _UploadMachinesState extends State<UploadMachines>
       }
       final response = await http.put(
         Uri.parse(
-            '${Constants.weblink}MachineReportUploadUpdated/${uploaddata[i]["id"].toString()}'),
+            '${Constants.weblink}MachineReportUploadUpdated/$id}'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $tokenvalue',
@@ -267,52 +254,16 @@ class _UploadMachinesState extends State<UploadMachines>
         }),
       );
       if (response.statusCode == 200) {
-        // data = jsonDecode(response.body);
-        if (i == subcatdata.length - 1) {
           Constants.showtoast("Report Updated!");
           Utils(context).stopLoading();
-        }
-        // Constants.showtoast("Report Updated!");
       } else {
         print(response.statusCode);
         print(response.body);
         Utils(context).stopLoading();
         Constants.showtoast("Error Updating Data.");
       }
-    }
     FetchMachinesList();
   }
-
-  // void UpdateMachinesList() async {
-  //   for (int i = 0; i < subcatdata.length; i++) {
-  //     final response = await http.post(
-  //       Uri.parse('${Constants.weblink}MachineReportUploadUpdated/${subcatdata[i]["id"].toString()}'),
-  //       headers: <String, String>{
-  //         'Content-Type': 'application/json; charset=UTF-8',
-  //         'Authorization': 'Bearer $tokenvalue',
-  //       },
-  //       body: jsonEncode(<String, String>{
-  //         '_method' : "PUT",
-  //         "em": EMControllers[i].text,
-  //         "hm": HMControllers[i].text,
-  //         "water": WaterControllers[i].text,
-  //         "batch": BatchControllers[i].text,
-  //       }),
-  //     );
-  //     if (response.statusCode == 200) {
-  //       // uploaddata = jsonDecode(response.body);
-  //       if (i == subcatdata.length - 1) {
-  //         Constants.showtoast("Report Updated!");
-  //       }
-  //       // Constants.showtoast("Report Updated!");
-  //     } else {
-  //       print(response.statusCode);
-  //       print(response.body);
-  //       Constants.showtoast("Error Updating Data.");
-  //     }
-  //   }
-  //   FetchMachinesList();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -374,43 +325,10 @@ class _UploadMachinesState extends State<UploadMachines>
                         // Icon(Icons.l, color: Colors.white,),
                       ],
                     ),
-                    Container(
-                      height: 30,
-                      padding: const EdgeInsets.only(right: 15.0),
-                      // width: 100,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Utils(context).startLoading();
-                          if (uploaddata.length == 0) {
-                            AddMachinesList();
-                          } else {
-                            UpdateMachinesList();
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                                Constants.primaryColor)),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(" Sumbit  ",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: Constants.popins,
-                                    fontSize: 14)),
-                            Image.asset(
-                              "assets/icons/Edit.png",
-                              height: 16,
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
             (isLoad == true)
                 ? SizedBox(
                     height: 500,
@@ -446,31 +364,76 @@ class _UploadMachinesState extends State<UploadMachines>
                             child: Column(
                               children: [
                                 Row(
-                                  // mainAxisAlignment:
-                                  //     MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    for (var item in maindata)
-                                      (item['id'].toString() ==
-                                              subcatdata[index]['categories_id']
-                                                  .toString())
-                                          ? Text(
-                                              item['categories'].toString() +
-                                                  "  : ",
-                                              style: TextStyle(
-                                                  fontFamily: Constants.popins,
-                                                  color: Constants.textColor,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15),
-                                            )
-                                          : Container(),
-                                    Text(
-                                      subcatdata[index]['sub_name'].toString(),
-                                      style: TextStyle(
-                                          fontFamily: Constants.popins,
-                                          color: Constants.textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 15),
+                                    Row(
+                                      // mainAxisAlignment:
+                                      //     MainAxisAlignment.spaceBetween,
+                                      // crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        for (var item in maindata)
+                                          (item['id'].toString() ==
+                                                  subcatdata[index]['categories_id']
+                                                      .toString())
+                                              ? Text(
+                                                  item['categories'].toString() +
+                                                      "  : ",
+                                                  style: TextStyle(
+                                                      fontFamily: Constants.popins,
+                                                      color: Constants.textColor,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 15),
+                                                )
+                                              : Container(),
+                                        Text(
+                                          subcatdata[index]['sub_name'].toString(),
+                                          style: TextStyle(
+                                              fontFamily: Constants.popins,
+                                              color: Constants.textColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                    Container(
+                                      height: 30,
+                                      padding:
+                                      const EdgeInsets.only(right: 15.0),
+                                      // width: 100,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          // Utils(context).startLoading();
+                                          if (IDControllers[index].text ==
+                                              "0") {
+                                            AddMachinesList(index);
+                                          } else {
+                                            UpdateMachinesList(index,
+                                                IDControllers[index].text);
+                                          }
+                                        },
+                                        style: ButtonStyle(
+                                            backgroundColor:
+                                            MaterialStateProperty.all<
+                                                Color>(
+                                                Constants.primaryColor)),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                          children: [
+                                            Text(" Sumbit  ",
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontFamily:
+                                                    Constants.popins,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12)),
+                                            // Image.asset(
+                                            //   "assets/icons/Edit.png",
+                                            //   height: 16,
+                                            // )
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),

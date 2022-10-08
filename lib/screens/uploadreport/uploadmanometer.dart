@@ -88,7 +88,7 @@ class _UploadManoSteamState extends State<UploadManoSteam>
     with AutomaticKeepAliveClientMixin<UploadManoSteam> {
   List<TextEditingController> ValueControllers = [];
   List<TextEditingController> TempControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   TextEditingController idfan = TextEditingController();
   TextEditingController fdfan = TextEditingController();
   TextEditingController coalused = TextEditingController();
@@ -96,7 +96,7 @@ class _UploadManoSteamState extends State<UploadManoSteam>
   TextEditingController aphtemp = TextEditingController();
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
-  var data;
+  var uploaddata;
   var listdata;
   late SharedPreferences prefs;
   String? tokenvalue;
@@ -112,6 +112,7 @@ class _UploadManoSteamState extends State<UploadManoSteam>
         selectedDate = picked;
         ValueControllers.clear();
         TempControllers.clear();
+        IDControllers.clear();
         idfan.clear();
         fdfan.clear();
         coalused.clear();
@@ -129,20 +130,26 @@ class _UploadManoSteamState extends State<UploadManoSteam>
   }
 
   void FetchManoSteamList() async {
+    ValueControllers.clear();
+    TempControllers.clear();
+    IDControllers.clear();
+    idfan.clear();
+    fdfan.clear();
+    coalused.clear();
+    aphvalue.clear();
+    aphtemp.clear();
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
       },
     );
-    print(response.statusCode);
-    print(response.statusCode);
     if (response.statusCode == 200) {
       listdata = jsonDecode(response.body);
       print("machine list");
@@ -157,33 +164,42 @@ class _UploadManoSteamState extends State<UploadManoSteam>
         },
       );
       if (responses.statusCode == 200) {
-        data = jsonDecode(responses.body);
+        uploaddata = jsonDecode(responses.body);
         print(" upload data");
-        print(data.length);
-        print(data);
-        if (data.length == 0) {
+        print(uploaddata.length);
+        print(uploaddata);
+        if (uploaddata.length == 0) {
           for (int i = 0; i < listdata.length; i++) {
             var flowController = TextEditingController(text: "");
             var unitController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
             ValueControllers.add(flowController);
             TempControllers.add(unitController);
+            IDControllers.add(idController);
           }
         } else {
-          for (int i = 0; i < data.length; i++) {
-            var idController =
-                TextEditingController(text: data[i]['id'].toString());
-            var valueController =
-                TextEditingController(text: data[i]['value'].toString());
-            var tempController =
-                TextEditingController(text: data[i]['temperature'].toString());
-            ValueID.add(idController);
-            ValueControllers.add(valueController);
-            TempControllers.add(tempController);
-            idfan.text = data[i]['id_fan'].toString();
-            fdfan.text = data[i]['fd_fan'].toString();
-            coalused.text = data[i]['coal_used'].toString();
-            aphvalue.text = data[i]['aph_value'].toString();
-            aphtemp.text = data[i]['aph_temperature'].toString();
+          for (int i = 0; i < listdata.length; i++) {
+            var flowController = TextEditingController(text: "");
+            var unitController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
+            for (int j = 0; j < uploaddata.length; j++) {
+              if (listdata[i]['id'] == uploaddata[j]['machine_id']) {
+                idController =
+                    TextEditingController(text: uploaddata[j]['id'].toString());
+                flowController = TextEditingController(
+                    text: uploaddata[j]['value'].toString());
+                unitController = TextEditingController(
+                    text: uploaddata[j]['temperature'].toString());
+              }
+            }
+            ValueControllers.add(flowController);
+            TempControllers.add(unitController);
+            IDControllers.add(idController);
+            idfan.text = uploaddata[0]['id_fan'].toString();
+            fdfan.text = uploaddata[0]['fd_fan'].toString();
+            coalused.text = uploaddata[0]['coal_used'].toString();
+            aphvalue.text = uploaddata[0]['aph_value'].toString();
+            aphtemp.text = uploaddata[0]['aph_temperature'].toString();
           }
         }
         setState(() {
@@ -195,8 +211,6 @@ class _UploadManoSteamState extends State<UploadManoSteam>
         setState(() {
           isLoad = false;
         });
-        // print("erro here1");
-        // Constants.showtoast("Error Fetching Data.");
       }
     } else {
       print("erro here2");
@@ -204,130 +218,132 @@ class _UploadManoSteamState extends State<UploadManoSteam>
     }
   }
 
-  void AddManoSteamList() async {
-    for (int i = 0; i < listdata.length; i++) {
-      String value = "0";
-      String temp = "0";
-      String id = "0";
-      String fd = "0";
-      String coal = "0";
-      String aphvaluee = "0";
-      String aphtempp = "0";
-      if (ValueControllers[i].text != "") {
-        value = ValueControllers[i].text;
-      }
-      if (TempControllers[i].text != "") {
-        temp = TempControllers[i].text;
-      }
-      if (idfan.text != "") {
-        id = idfan.text;
-      }
-      if (fdfan.text != "") {
-        fd = fdfan.text;
-      }
-      if (coalused.text != "") {
-        coal = coalused.text;
-      }
-      if (aphvalue.text != "") {
-        aphvaluee = aphvalue.text;
-      }
-      if (aphtemp.text != "") {
-        aphtempp = aphtemp.text;
-      }
-      final response = await http.post(
-        Uri.parse('${Constants.weblink}ManoMeterSteamBoilerReportUploadAdd'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "date": selectedDate.toString().split(" ")[0],
-          "machine_id": listdata[i]["id"].toString(),
-          "id_fan": id,
-          "fd_fan": fd,
-          "coal_used": coal,
-          "aph_value": aphvaluee,
-          "aph_temperature": aphtempp,
-          "value": value,
-          "temperature": temp
-        }),
-      );
-      if (response.statusCode == 200) {
-        // data = jsonDecode(response.body);
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Added!");
-          Utils(context).stopLoading();
-        }
-        // Constants.showtoast("Report Updated!");
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        Utils(context).stopLoading();
-      }
+  void AddManoSteamList(int i) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String value = "0";
+    String temp = "0";
+    String idf = "0";
+    String fd = "0";
+    String coal = "0";
+    String aphvaluee = "0";
+    String aphtempp = "0";
+    if (ValueControllers[i].text != "") {
+      value = ValueControllers[i].text;
     }
+    if (TempControllers[i].text != "") {
+      temp = TempControllers[i].text;
+    }
+    if (idfan.text != "") {
+      idf = idfan.text;
+    }
+    if (fdfan.text != "") {
+      fd = fdfan.text;
+    }
+    if (coalused.text != "") {
+      coal = coalused.text;
+    }
+    if (aphvalue.text != "") {
+      aphvaluee = aphvalue.text;
+    }
+    if (aphtemp.text != "") {
+      aphtempp = aphtemp.text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerReportUploadAdd'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "date": selectedDate.toString().split(" ")[0],
+        "machine_id": listdata[i]["id"].toString(),
+        "id_fan": idf,
+        "fd_fan": fd,
+        "coal_used": coal,
+        "aph_value": aphvaluee,
+        "aph_temperature": aphtempp,
+        "value": value,
+        "temperature": temp
+      }),
+    );
+    if (response.statusCode == 200) {
+      // data = jsonDecode(response.body);
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Added!");
+      Utils(context).stopLoading();
+      // }
+      // Constants.showtoast("Report Updated!");
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
+    }
+    // }
     FetchManoSteamList();
   }
 
-  void UpdateManoSteamList() async {
-    for (int i = 0; i < listdata.length; i++) {
-      String value = "0";
-      String temp = "0";
-      String id = "0";
-      String fd = "0";
-      String coal = "0";
-      String aphvaluee = "0";
-      String aphtempp = "0";
-      if (ValueControllers[i].text != "") {
-        value = ValueControllers[i].text;
-      }
-      if (TempControllers[i].text != "") {
-        temp = TempControllers[i].text;
-      }
-      if (idfan.text != "") {
-        id = idfan.text;
-      }
-      if (fdfan.text != "") {
-        fd = fdfan.text;
-      }
-      if (coalused.text != "") {
-        coal = coalused.text;
-      }
-      if (aphvalue.text != "") {
-        aphvaluee = aphvalue.text;
-      }
-      if (aphtemp.text != "") {
-        aphtempp = aphtemp.text;
-      }
-      final response = await http.put(
-        Uri.parse(
-            '${Constants.weblink}ManoMeterSteamBoilerReportUploadUpdate/${data[i]['id']}'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "id_fan": id,
-          "fd_fan": fd,
-          "coal_used": coal,
-          "aph_value": aphvaluee,
-          "aph_temperature": aphtempp,
-          "value": value,
-          "temperature": temp
-        }),
-      );
-      if (response.statusCode == 200) {
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Updated!");
-          Utils(context).stopLoading();
-        }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        Utils(context).stopLoading();
-      }
+  void UpdateManoSteamList(int i, String id) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String value = "0";
+    String temp = "0";
+    String idf = "0";
+    String fd = "0";
+    String coal = "0";
+    String aphvaluee = "0";
+    String aphtempp = "0";
+    if (ValueControllers[i].text != "") {
+      value = ValueControllers[i].text;
     }
+    if (TempControllers[i].text != "") {
+      temp = TempControllers[i].text;
+    }
+    if (idfan.text != "") {
+      idf = idfan.text;
+    }
+    if (fdfan.text != "") {
+      fd = fdfan.text;
+    }
+    if (coalused.text != "") {
+      coal = coalused.text;
+    }
+    if (aphvalue.text != "") {
+      aphvaluee = aphvalue.text;
+    }
+    if (aphtemp.text != "") {
+      aphtempp = aphtemp.text;
+    }
+    final response = await http.put(
+      Uri.parse(
+          '${Constants.weblink}ManoMeterSteamBoilerReportUploadUpdate/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "id_fan": idf,
+        "fd_fan": fd,
+        "coal_used": coal,
+        "aph_value": aphvaluee,
+        "aph_temperature": aphtempp,
+        "value": value,
+        "temperature": temp
+      }),
+    );
+    if (response.statusCode == 200) {
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Updated!");
+      Utils(context).stopLoading();
+      // }
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
+    }
+    // }
     FetchManoSteamList();
   }
 
@@ -394,41 +410,6 @@ class _UploadManoSteamState extends State<UploadManoSteam>
                               )),
                           // Icon(Icons.l, color: Colors.white,),
                         ],
-                      ),
-                      Container(
-                        height: 30,
-                        padding: const EdgeInsets.only(right: 15.0),
-                        // width: 100,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_key.currentState!.validate()) {
-                              _key.currentState!.save();
-                              Utils(context).startLoading();
-                              if (data.length == 0) {
-                                AddManoSteamList();
-                              } else {
-                                UpdateManoSteamList();
-                              }
-                            }
-                          },
-                          style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  Constants.primaryColor)),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(" Sumbit  ",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontFamily: Constants.popins,
-                                      fontSize: 14)),
-                              Image.asset(
-                                "assets/icons/Edit.png",
-                                height: 16,
-                              )
-                            ],
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -796,7 +777,7 @@ class _UploadManoSteamState extends State<UploadManoSteam>
                           child: ListView.builder(
                             itemCount: listdata.length,
                             itemBuilder: (BuildContext context, int index) {
-                              print(ValueControllers[index]);
+                              // print(ValueControllers[index]);
                               return Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Container(
@@ -832,6 +813,54 @@ class _UploadManoSteamState extends State<UploadManoSteam>
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 15),
                                           ),
+                                          Container(
+                                            height: 30,
+                                            padding: const EdgeInsets.only(
+                                                right: 15.0),
+                                            // width: 100,
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                if (_key.currentState!
+                                                    .validate()) {
+                                                  _key.currentState!.save();
+                                                  // Utils(context).startLoading();
+                                                  if (IDControllers[index]
+                                                          .text ==
+                                                      "0") {
+                                                    AddManoSteamList(index);
+                                                  } else {
+                                                    print(
+                                                        "idfan.text and IDCONTROLLERS");
+                                                    print(idfan.text);
+                                                    print(IDControllers[index]
+                                                        .text);
+                                                    // UpdateManoSteamList();
+                                                    UpdateManoSteamList(
+                                                        index,
+                                                        IDControllers[index]
+                                                            .text);
+                                                  }
+                                                }
+                                              },
+                                              style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty
+                                                          .all<Color>(Constants
+                                                              .primaryColor)),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Text(" Sumbit  ",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontFamily:
+                                                              Constants.popins,
+                                                          fontSize: 14)),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       SizedBox(height: 10),
@@ -863,7 +892,6 @@ class _UploadManoSteamState extends State<UploadManoSteam>
                                                     child: TextFormField(
                                                       keyboardType:
                                                           TextInputType.number,
-
                                                       controller:
                                                           ValueControllers[
                                                               index],
@@ -950,7 +978,6 @@ class _UploadManoSteamState extends State<UploadManoSteam>
                                                     child: TextFormField(
                                                       keyboardType:
                                                           TextInputType.number,
-
                                                       controller:
                                                           TempControllers[
                                                               index],
@@ -1046,7 +1073,7 @@ class _UploadManoThermoState extends State<UploadManoThermo>
     with AutomaticKeepAliveClientMixin<UploadManoThermo> {
   List<TextEditingController> ValueControllers = [];
   List<TextEditingController> TempControllers = [];
-  List<TextEditingController> ValueID = [];
+  List<TextEditingController> IDControllers = [];
   TextEditingController idfan = TextEditingController();
   TextEditingController fdfan = TextEditingController();
   TextEditingController coalused = TextEditingController();
@@ -1054,7 +1081,7 @@ class _UploadManoThermoState extends State<UploadManoThermo>
   TextEditingController aphtemp = TextEditingController();
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
-  var data;
+  var uploaddata;
   var listdata;
   late SharedPreferences prefs;
   String? tokenvalue;
@@ -1070,6 +1097,7 @@ class _UploadManoThermoState extends State<UploadManoThermo>
         selectedDate = picked;
         ValueControllers.clear();
         TempControllers.clear();
+        IDControllers.clear();
         idfan.clear();
         fdfan.clear();
         coalused.clear();
@@ -1087,13 +1115,21 @@ class _UploadManoThermoState extends State<UploadManoThermo>
   }
 
   void FetchManoThermoList() async {
+    ValueControllers.clear();
+    TempControllers.clear();
+    IDControllers.clear();
+    idfan.clear();
+    fdfan.clear();
+    coalused.clear();
+    aphvalue.clear();
+    aphtemp.clear();
     setState(() {
       isLoad = true;
     });
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -1113,33 +1149,42 @@ class _UploadManoThermoState extends State<UploadManoThermo>
         },
       );
       if (responses.statusCode == 200) {
-        data = jsonDecode(responses.body);
+        uploaddata = jsonDecode(responses.body);
         print(" upload data");
-        print(data.length);
-        print(data);
-        if (data.length == 0) {
+        print(uploaddata.length);
+        print(uploaddata);
+        if (uploaddata.length == 0) {
           for (int i = 0; i < listdata.length; i++) {
             var flowController = TextEditingController(text: "");
             var unitController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
             ValueControllers.add(flowController);
             TempControllers.add(unitController);
+            IDControllers.add(idController);
           }
         } else {
-          for (int i = 0; i < data.length; i++) {
-            var idController =
-                TextEditingController(text: data[i]['id'].toString());
-            var valueController =
-                TextEditingController(text: data[i]['value'].toString());
-            var tempController =
-                TextEditingController(text: data[i]['temperature'].toString());
-            ValueID.add(idController);
+          for (int i = 0; i < listdata.length; i++) {
+            var valueController = TextEditingController(text: "");
+            var tempController = TextEditingController(text: "");
+            var idController = TextEditingController(text: "0");
+            for (int j = 0; j < uploaddata.length; j++) {
+              if (listdata[i]['id'] == uploaddata[j]['machine_id']) {
+                idController =
+                    TextEditingController(text: uploaddata[j]['id'].toString());
+                valueController = TextEditingController(
+                    text: uploaddata[j]['value'].toString());
+                tempController = TextEditingController(
+                    text: uploaddata[j]['temperature'].toString());
+              }
+            }
+            IDControllers.add(idController);
             ValueControllers.add(valueController);
             TempControllers.add(tempController);
-            idfan.text = data[i]['id_fan'].toString();
-            fdfan.text = data[i]['fd_fan'].toString();
-            coalused.text = data[i]['coal_used'].toString();
-            aphvalue.text = data[i]['aph_value'].toString();
-            aphtemp.text = data[i]['aph_temperature'].toString();
+            idfan.text = uploaddata[0]['id_fan'].toString();
+            fdfan.text = uploaddata[0]['fd_fan'].toString();
+            coalused.text = uploaddata[0]['coal_used'].toString();
+            aphvalue.text = uploaddata[0]['aph_value'].toString();
+            aphtemp.text = uploaddata[0]['aph_temperature'].toString();
           }
         }
         setState(() {
@@ -1158,130 +1203,132 @@ class _UploadManoThermoState extends State<UploadManoThermo>
     }
   }
 
-  void AddManoThermoList() async {
-    for (int i = 0; i < listdata.length; i++) {
-      String value = "0";
-      String temp = "0";
-      String id = "0";
-      String fd = "0";
-      String coal = "0";
-      String aphvaluee = "0";
-      String aphtempp = "0";
-      if (ValueControllers[i].text != "") {
-        value = ValueControllers[i].text;
-      }
-      if (TempControllers[i].text != "") {
-        temp = TempControllers[i].text;
-      }
-      if (idfan.text != "") {
-        id = idfan.text;
-      }
-      if (fdfan.text != "") {
-        fd = fdfan.text;
-      }
-      if (coalused.text != "") {
-        coal = coalused.text;
-      }
-      if (aphvalue.text != "") {
-        aphvaluee = aphvalue.text;
-      }
-      if (aphtemp.text != "") {
-        aphtempp = aphtemp.text;
-      }
-      final response = await http.post(
-        Uri.parse('${Constants.weblink}ManoMeterThermopackReportUploadAdd'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          "date": selectedDate.toString().split(" ")[0],
-          "machine_id": listdata[i]["id"].toString(),
-          "id_fan": id,
-          "fd_fan": fd,
-          "coal_used": coal,
-          "aph_value": aphvaluee,
-          "aph_temperature": aphtempp,
-          "value": value,
-          "temperature": temp,
-        }),
-      );
-      if (response.statusCode == 200) {
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Added!");
-          Utils(context).stopLoading();
-        }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        Utils(context).stopLoading();
-      }
+  void AddManoThermoList(int i) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String value = "0";
+    String temp = "0";
+    String idf = "0";
+    String fd = "0";
+    String coal = "0";
+    String aphvaluee = "0";
+    String aphtempp = "0";
+    if (ValueControllers[i].text != "") {
+      value = ValueControllers[i].text;
     }
+    if (TempControllers[i].text != "") {
+      temp = TempControllers[i].text;
+    }
+    if (idfan.text != "") {
+      idf = idfan.text;
+    }
+    if (fdfan.text != "") {
+      fd = fdfan.text;
+    }
+    if (coalused.text != "") {
+      coal = coalused.text;
+    }
+    if (aphvalue.text != "") {
+      aphvaluee = aphvalue.text;
+    }
+    if (aphtemp.text != "") {
+      aphtempp = aphtemp.text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}ManoMeterThermopackReportUploadAdd'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        "date": selectedDate.toString().split(" ")[0],
+        "machine_id": listdata[i]["id"].toString(),
+        "id_fan": idf,
+        "fd_fan": fd,
+        "coal_used": coal,
+        "aph_value": aphvaluee,
+        "aph_temperature": aphtempp,
+        "value": value,
+        "temperature": temp,
+      }),
+    );
+    if (response.statusCode == 200) {
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Added!");
+      Utils(context).stopLoading();
+      // }
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
+    }
+    // }
     FetchManoThermoList();
   }
 
-  void UpdateManoThermoList() async {
-    for (int i = 0; i < listdata.length; i++) {
-      String value = "0";
-      String temp = "0";
-      String id = "0";
-      String fd = "0";
-      String coal = "0";
-      String aphvaluee = "0";
-      String aphtempp = "0";
-      if (ValueControllers[i].text != "") {
-        value = ValueControllers[i].text;
-      }
-      if (TempControllers[i].text != "") {
-        temp = TempControllers[i].text;
-      }
-      if (idfan.text != "") {
-        id = idfan.text;
-      }
-      if (fdfan.text != "") {
-        fd = fdfan.text;
-      }
-      if (coalused.text != "") {
-        coal = coalused.text;
-      }
-      if (aphvalue.text != "") {
-        aphvaluee = aphvalue.text;
-      }
-      if (aphtemp.text != "") {
-        aphtempp = aphtemp.text;
-      }
-      final response = await http.put(
-        Uri.parse(
-            '${Constants.weblink}ManoMeterThermopackReportUploadUpdate/${data[i]['id']}'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          // "date": selectedDate.toString().split(" ")[0],
-          // "machine_id": listdata[i]["id"].toString(),
-          "id_fan": id,
-          "fd_fan": fd,
-          "coal_used": coal,
-          "aph_value": aphvaluee,
-          "aph_temperature": aphtempp,
-          "value": value,
-          "temperature": temp
-        }),
-      );
-      if (response.statusCode == 200) {
-        if (i == listdata.length - 1) {
-          Constants.showtoast("Report Updated!");
-          Utils(context).stopLoading();
-        }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Constants.showtoast("Error Updating Data.");
-        Utils(context).stopLoading();
-      }
+  void UpdateManoThermoList(int i, String id) async {
+    Utils(context).startLoading();
+    // for (int i = 0; i < listdata.length; i++) {
+    String value = "0";
+    String temp = "0";
+    String idf = "0";
+    String fd = "0";
+    String coal = "0";
+    String aphvaluee = "0";
+    String aphtempp = "0";
+    if (ValueControllers[i].text != "") {
+      value = ValueControllers[i].text;
     }
+    if (TempControllers[i].text != "") {
+      temp = TempControllers[i].text;
+    }
+    if (idfan.text != "") {
+      idf = idfan.text;
+    }
+    if (fdfan.text != "") {
+      fd = fdfan.text;
+    }
+    if (coalused.text != "") {
+      coal = coalused.text;
+    }
+    if (aphvalue.text != "") {
+      aphvaluee = aphvalue.text;
+    }
+    if (aphtemp.text != "") {
+      aphtempp = aphtemp.text;
+    }
+    final response = await http.put(
+      Uri.parse(
+          '${Constants.weblink}ManoMeterThermopackReportUploadUpdate/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        // "date": selectedDate.toString().split(" ")[0],
+        // "machine_id": listdata[i]["id"].toString(),
+        "id_fan": idf,
+        "fd_fan": fd,
+        "coal_used": coal,
+        "aph_value": aphvaluee,
+        "aph_temperature": aphtempp,
+        "value": value,
+        "temperature": temp
+      }),
+    );
+    if (response.statusCode == 200) {
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Updated!");
+      Utils(context).stopLoading();
+      // }
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Constants.showtoast("Error Updating Data.");
+      Utils(context).stopLoading();
+    }
+    // }
     FetchManoThermoList();
   }
 
@@ -1349,43 +1396,6 @@ class _UploadManoThermoState extends State<UploadManoThermo>
                           // Icon(Icons.l, color: Colors.white,),
                         ],
                       ),
-                      Container(
-                        height: 30,
-                        padding: const EdgeInsets.only(right: 15.0),
-                        // width: 100,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_key.currentState!.validate()) {
-                              _key.currentState!.save();
-                              Utils(context).startLoading();
-                              if (data.length == 0) {
-                                AddManoThermoList();
-                              } else {
-                                UpdateManoThermoList();
-                              }
-                            } else {
-                              Constants.showtoast("Please Fill all the fields");
-                            }
-                          },
-                          style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  Constants.primaryColor)),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(" Sumbit  ",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontFamily: Constants.popins,
-                                      fontSize: 14)),
-                              Image.asset(
-                                "assets/icons/Edit.png",
-                                height: 16,
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1413,7 +1423,6 @@ class _UploadManoThermoState extends State<UploadManoThermo>
                             width: w * 0.15,
                             child: TextFormField(
                               keyboardType: TextInputType.number,
-
                               controller: idfan,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
@@ -1466,7 +1475,6 @@ class _UploadManoThermoState extends State<UploadManoThermo>
                             width: w * 0.15,
                             child: TextFormField(
                               keyboardType: TextInputType.number,
-
                               controller: fdfan,
                               style: TextStyle(
                                 fontFamily: Constants.popins,
@@ -1789,6 +1797,54 @@ class _UploadManoThermoState extends State<UploadManoThermo>
                                                 color: Constants.textColor,
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 15),
+                                          ),
+                                          Container(
+                                            height: 30,
+                                            padding: const EdgeInsets.only(
+                                                right: 15.0),
+                                            // width: 100,
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                if (_key.currentState!
+                                                    .validate()) {
+                                                  _key.currentState!.save();
+                                                  // Utils(context).startLoading();
+                                                  if (IDControllers[index]
+                                                          .text ==
+                                                      "0") {
+                                                    AddManoThermoList(index);
+                                                  } else {
+                                                    print(
+                                                        "idfan.text and IDCONTROLLERS");
+                                                    print(idfan.text);
+                                                    print(IDControllers[index]
+                                                        .text);
+                                                    // UpdateManoSteamList();
+                                                    UpdateManoThermoList(
+                                                        index,
+                                                        IDControllers[index]
+                                                            .text);
+                                                  }
+                                                }
+                                              },
+                                              style: ButtonStyle(
+                                                  backgroundColor:
+                                                      MaterialStateProperty
+                                                          .all<Color>(Constants
+                                                              .primaryColor)),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Text(" Sumbit  ",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontFamily:
+                                                              Constants.popins,
+                                                          fontSize: 14)),
+                                                ],
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),

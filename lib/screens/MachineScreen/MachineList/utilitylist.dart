@@ -24,6 +24,7 @@ class _UtilityListState extends State<UtilityList>
   void initState() {
     super.initState();
     FetchUtilityMachineList();
+    print(DateTime.now());
   }
 
   void FetchUtilityMachineList() async {
@@ -33,7 +34,7 @@ class _UtilityListState extends State<UtilityList>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtilityLisiting'),
+      Uri.parse('${Constants.weblink}GetUtilityLisiting/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -42,6 +43,7 @@ class _UtilityListState extends State<UtilityList>
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       data = jsonDecode(response.body);
+      print(data);
       setState(() {
         isLoad = false;
       });

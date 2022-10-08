@@ -44,7 +44,7 @@ class _UtilityDetailState extends State<UtilityDetail> {
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList'),
+      Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',

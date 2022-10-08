@@ -34,7 +34,7 @@ class _MachinesListState extends State<MachinesList> with AutomaticKeepAliveClie
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetMachineCategoriesListing'),
+      Uri.parse('${Constants.weblink}GetMachineCategoriesListing/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',

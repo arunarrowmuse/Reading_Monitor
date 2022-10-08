@@ -106,7 +106,7 @@ class _ManoSteamBoilerState extends State<ManoSteamBoiler>
     tokenvalue = prefs.getString("token");
     print("2");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterSteamBoilerLisiting/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -675,7 +675,7 @@ class _ManoThermoPackState extends State<ManoThermoPack> with AutomaticKeepAlive
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting'),
+      Uri.parse('${Constants.weblink}ManoMeterThermopackLisiting/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',

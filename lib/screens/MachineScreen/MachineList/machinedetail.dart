@@ -46,7 +46,7 @@ class _MachineDetailState extends State<MachineDetail> {
       isLoad = true;
     });
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing'),
+      Uri.parse('${Constants.weblink}GetMachineSubCategoriesListing/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',

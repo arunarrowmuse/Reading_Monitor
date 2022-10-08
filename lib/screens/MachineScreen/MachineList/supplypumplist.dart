@@ -35,7 +35,7 @@ class _SupplyPumpListState extends State<SupplyPumpList>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetSupplyPumpListing'),
+      Uri.parse('${Constants.weblink}GetSupplyPumpListing/${DateTime.now().toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
