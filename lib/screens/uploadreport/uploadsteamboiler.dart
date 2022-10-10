@@ -22,6 +22,8 @@ class _UploadSteamBoilerState extends State<UploadSteamBoiler>
   TextEditingController bfwtemp = TextEditingController();
   bool isLoad = false;
   var data;
+  var checkdata;
+  bool islisted = true;
   late SharedPreferences prefs;
   String? tokenvalue;
 
@@ -45,6 +47,7 @@ class _UploadSteamBoilerState extends State<UploadSteamBoiler>
   void initState() {
     super.initState();
     FetchUploadSteamList();
+    FetchSteamMachineList();
   }
 
   void FetchUploadSteamList() async {
@@ -184,6 +187,37 @@ class _UploadSteamBoilerState extends State<UploadSteamBoiler>
     }
   }
 
+  /// machine list check API
+  void FetchSteamMachineList() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    print(tokenvalue);
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}SteamBolierListing'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      checkdata = jsonDecode(response.body);
+      if (checkdata.length == 0) {
+        islisted = false;
+      }
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
@@ -259,11 +293,26 @@ class _UploadSteamBoilerState extends State<UploadSteamBoiler>
                               setState(() {
                                 if (_key.currentState!.validate()) {
                                   _key.currentState!.save();
-                                  Utils(context).startLoading();
-                                  if (data.length == 0) {
-                                    AddUploadSteamList();
+                                  if (islisted == false) {
+                                    showDialog<String>(
+                                      context: context,
+                                      builder: (BuildContext context) => AlertDialog(
+                                        content: const Text('Please Add Steam Boiler data to Machine List First.'),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, 'OK'),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
                                   } else {
-                                    UpdateUploadSteamList();
+                                    Utils(context).startLoading();
+                                    if (data.length == 0) {
+                                      AddUploadSteamList();
+                                    } else {
+                                      UpdateUploadSteamList();
+                                    }
                                   }
                                 } else {
                                   Constants.showtoast(

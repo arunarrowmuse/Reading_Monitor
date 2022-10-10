@@ -18,6 +18,8 @@ class _UploadGEBState extends State<UploadGEB>
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
   var data;
+  var checkdata;
+  bool islisting = true;
   TextEditingController kwh = TextEditingController();
   TextEditingController kvarh = TextEditingController();
   TextEditingController kvah = TextEditingController();
@@ -191,6 +193,39 @@ class _UploadGEBState extends State<UploadGEB>
     }
   }
 
+  /// machinelist API
+  void FetchGEBMachineList() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    print(tokenvalue);
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}GetGebListing'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      checkdata = jsonDecode(response.body);
+      if (checkdata.length == 0) {
+        islisting = false;
+      }
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
@@ -216,7 +251,6 @@ class _UploadGEBState extends State<UploadGEB>
                   const SizedBox(height: 10),
                   Container(
                     height: 40,
-                    // color: Constants.secondaryColor,
                     child: GestureDetector(
                       onTap: () {
                         _selectDate(context);
@@ -227,7 +261,6 @@ class _UploadGEBState extends State<UploadGEB>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              // Icon(Icons.calendar_month, color: Colors.white,),
                               Container(
                                   padding: const EdgeInsets.all(8.0),
                                   height: 40,
@@ -258,23 +291,39 @@ class _UploadGEBState extends State<UploadGEB>
                                     "assets/icons/down.png",
                                     color: Constants.primaryColor,
                                   )),
-                              // Icon(Icons.l, color: Colors.white,),
                             ],
                           ),
                           Container(
                             height: 30,
                             padding: const EdgeInsets.only(right: 15.0),
-                            // width: 100,
                             child: ElevatedButton(
                               onPressed: () {
                                 setState(() {
                                   if (_key.currentState!.validate()) {
                                     _key.currentState!.save();
-                                    Utils(context).startLoading();
-                                    if (data.length == 0) {
-                                      AddGEBList();
+                                    if (islisting == false) {
+                                      showDialog<String>(
+                                        context: context,
+                                        builder: (BuildContext context) =>
+                                            AlertDialog(
+                                          content: const Text(
+                                              'Please Add GEB data to Machine List First.'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, 'OK'),
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
                                     } else {
-                                      UpdateGEBList(data[0]["id"].toString());
+                                      Utils(context).startLoading();
+                                      if (data.length == 0) {
+                                        AddGEBList();
+                                      } else {
+                                        UpdateGEBList(data[0]["id"].toString());
+                                      }
                                     }
                                   } else {
                                     Constants.showtoast(

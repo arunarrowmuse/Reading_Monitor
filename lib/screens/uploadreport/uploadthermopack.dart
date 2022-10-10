@@ -25,6 +25,8 @@ class _UploadThermoPackState extends State<UploadThermoPack>
   DateTime selectedDate = DateTime.now();
   bool isLoad = false;
   var data;
+  var checkdata;
+  bool islisting = true;
   late SharedPreferences prefs;
   String? tokenvalue;
 
@@ -205,7 +207,7 @@ class _UploadThermoPackState extends State<UploadThermoPack>
         "in_temperature": intemperature,
         "out_temperature": outtemperature,
         "pump_presure": pump,
-        "circuit_presure":circuit
+        "circuit_presure": circuit
       }),
     );
     if (response.statusCode == 200) {
@@ -218,6 +220,37 @@ class _UploadThermoPackState extends State<UploadThermoPack>
       print(response.body);
       Utils(context).stopLoading();
       Constants.showtoast("Error Updating Data.");
+    }
+  }
+
+  /// machinelist API
+  void FetchThermoMachineList() async {
+    setState(() {
+      isLoad = true;
+    });
+    prefs = await SharedPreferences.getInstance();
+    tokenvalue = prefs.getString("token");
+    print(tokenvalue);
+    final response = await http.get(
+      Uri.parse('${Constants.weblink}ThermopackListing'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+    );
+    if (response.statusCode == 200) {
+      checkdata = jsonDecode(response.body);
+      if (checkdata.length == 0) {
+        islisting = false;
+      }
+      setState(() {
+        isLoad = false;
+      });
+    } else {
+      setState(() {
+        isLoad = false;
+      });
+      Constants.showtoast("Error Fetching Data.");
     }
   }
 
@@ -296,11 +329,31 @@ class _UploadThermoPackState extends State<UploadThermoPack>
                               setState(() {
                                 if (_key.currentState!.validate()) {
                                   _key.currentState!.save();
-                                  Utils(context).startLoading();
-                                  if (data.length == 0) {
-                                    AddThermoList();
+                                  if (islisting == false) {
+                                    showDialog<String>(
+                                      context: context,
+                                      builder: (BuildContext context) => AlertDialog(
+                                        // title: const Text('AlertDialog Title'),
+                                        content: const Text('Please Add Thermopack data to Machine List First.'),
+                                        actions: <Widget>[
+                                          // TextButton(
+                                          //   onPressed: () => Navigator.pop(context, 'Cancel'),
+                                          //   child: const Text('Cancel'),
+                                          // ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, 'OK'),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
                                   } else {
-                                    UpdateThermoList();
+                                    Utils(context).startLoading();
+                                    if (data.length == 0) {
+                                      AddThermoList();
+                                    } else {
+                                      UpdateThermoList();
+                                    }
                                   }
                                 } else {
                                   Constants.showtoast(
@@ -416,7 +469,6 @@ class _UploadThermoPackState extends State<UploadThermoPack>
                                   width: w * 0.4,
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
-
                                     controller: coal1,
                                     style: TextStyle(
                                       fontFamily: Constants.popins,
@@ -472,7 +524,6 @@ class _UploadThermoPackState extends State<UploadThermoPack>
                                   width: w * 0.4,
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
-
                                     controller: coal2,
                                     style: TextStyle(
                                       fontFamily: Constants.popins,
@@ -528,7 +579,6 @@ class _UploadThermoPackState extends State<UploadThermoPack>
                                   width: w * 0.4,
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
-
                                     controller: intemp,
                                     style: TextStyle(
                                       fontFamily: Constants.popins,
