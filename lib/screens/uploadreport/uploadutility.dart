@@ -60,7 +60,8 @@ class _UploadUtilityState extends State<UploadUtility>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final responsed = await http.get(
-      Uri.parse('${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
+      Uri.parse(
+          '${Constants.weblink}GetUtilityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -71,7 +72,8 @@ class _UploadUtilityState extends State<UploadUtility>
       print("machine name");
       print(maindata);
       final response = await http.get(
-        Uri.parse('${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
+        Uri.parse(
+            '${Constants.weblink}GetUtiltiSubCategoriesList/${selectedDate.toString().split(" ")[0]}'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $tokenvalue',
@@ -175,7 +177,7 @@ class _UploadUtilityState extends State<UploadUtility>
       }),
     );
     if (response.statusCode == 200) {
-        Constants.showtoast("Report Added!");
+      Constants.showtoast("Report Added!");
       Utils(context).stopLoading();
     } else {
       print(response.statusCode);
@@ -206,13 +208,10 @@ class _UploadUtilityState extends State<UploadUtility>
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
       },
-      body: jsonEncode(<String, String>{
-        "em": emvalue,
-        "hm": hmvalue
-      }),
+      body: jsonEncode(<String, String>{"em": emvalue, "hm": hmvalue}),
     );
     if (response.statusCode == 200) {
-        Constants.showtoast("Report Updated!");
+      Constants.showtoast("Report Updated!");
       Utils(context).stopLoading();
     } else {
       print(response.statusCode);
@@ -405,7 +404,6 @@ class _UploadUtilityState extends State<UploadUtility>
                                               "0") {
                                             AddUtilityList(index);
                                           } else {
-
                                             UpdateUtilityList(index,
                                                 IDControllers[index].text);
                                           }

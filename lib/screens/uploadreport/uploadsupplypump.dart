@@ -58,7 +58,8 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetSupplyPumpListing/${selectedDate.toString().split(" ")[0]}'),
+      Uri.parse(
+          '${Constants.weblink}GetSupplyPumpListing/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -345,7 +346,6 @@ class _UploadSupplyPumpState extends State<UploadSupplyPump>
                                                 UpdateSupplyList(index,
                                                     IDControllers[index].text);
                                               }
-
                                             },
                                             style: ButtonStyle(
                                                 backgroundColor:

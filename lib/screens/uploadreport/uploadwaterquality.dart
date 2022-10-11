@@ -61,7 +61,8 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
     prefs = await SharedPreferences.getInstance();
     tokenvalue = prefs.getString("token");
     final response = await http.get(
-      Uri.parse('${Constants.weblink}GetWaterQualityLisiting/${selectedDate.toString().split(" ")[0]}'),
+      Uri.parse(
+          '${Constants.weblink}GetWaterQualityLisiting/${selectedDate.toString().split(" ")[0]}'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $tokenvalue',
@@ -103,16 +104,15 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
             var hardnessController = TextEditingController(text: "");
             var idController = TextEditingController(text: "0");
             for (int j = 0; j < uploaddata.length; j++) {
-              if (listdata[i]['id'] ==
-                  uploaddata[j]['machine_name_id']){
-                 idController =
-                TextEditingController(text: uploaddata[j]['id'].toString());
-                 tdsController =
-                TextEditingController(text: uploaddata[j]['tds'].toString());
-                 phController =
-                TextEditingController(text: uploaddata[j]['ph'].toString());
-                 hardnessController =
-                TextEditingController(text: uploaddata[j]['hardness'].toString());
+              if (listdata[i]['id'] == uploaddata[j]['machine_name_id']) {
+                idController =
+                    TextEditingController(text: uploaddata[j]['id'].toString());
+                tdsController = TextEditingController(
+                    text: uploaddata[j]['tds'].toString());
+                phController =
+                    TextEditingController(text: uploaddata[j]['ph'].toString());
+                hardnessController = TextEditingController(
+                    text: uploaddata[j]['hardness'].toString());
               }
             }
             TDSControllers.add(tdsController);
@@ -140,89 +140,88 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
   void AddWaterList(int i) async {
     Utils(context).startLoading();
     // for (int i = 0; i < listdata.length; i++) {
-      String tds = "0";
-      String ph = "0";
-      String hardness = "0";
-      if (TDSControllers[i].text != "") {
-        tds = TDSControllers[i].text;
-      }
-      if (PHControllers[i].text != "") {
-        ph = PHControllers[i].text;
-      }
-      if (HardnessControllers[i].text != "") {
-        hardness = HardnessControllers[i].text;
-      }
-      final response = await http.post(
-        Uri.parse('${Constants.weblink}GetWaterQualityReportUploadAdd'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          // "id": ValueID[i].text,
-          "date": selectedDate.toString().split(" ")[0],
-          "machine_name_id": listdata[i]["id"].toString(),
-          "tds": tds,
-          "ph": ph,
-          "hardness": hardness
-        }),
-      );
-      if (response.statusCode == 200) {
-        // uploaddata = jsonDecode(response.body);
-        // if (i == listdata.length - 1) {
-          Constants.showtoast("Report Added!");
-          Utils(context).stopLoading();
-        // }
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Utils(context).stopLoading();
-        Constants.showtoast("Error Updating Data.");
-      }
+    String tds = "0";
+    String ph = "0";
+    String hardness = "0";
+    if (TDSControllers[i].text != "") {
+      tds = TDSControllers[i].text;
+    }
+    if (PHControllers[i].text != "") {
+      ph = PHControllers[i].text;
+    }
+    if (HardnessControllers[i].text != "") {
+      hardness = HardnessControllers[i].text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}GetWaterQualityReportUploadAdd'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        // "id": ValueID[i].text,
+        "date": selectedDate.toString().split(" ")[0],
+        "machine_name_id": listdata[i]["id"].toString(),
+        "tds": tds,
+        "ph": ph,
+        "hardness": hardness
+      }),
+    );
+    if (response.statusCode == 200) {
+      // uploaddata = jsonDecode(response.body);
+      // if (i == listdata.length - 1) {
+      Constants.showtoast("Report Added!");
+      Utils(context).stopLoading();
+      // }
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Utils(context).stopLoading();
+      Constants.showtoast("Error Updating Data.");
+    }
     // }
     FetchWaterList();
   }
 
-  void UpdateWaterList(int i, String id ) async {
+  void UpdateWaterList(int i, String id) async {
     Utils(context).startLoading();
     // for (int i = 0; i < listdata.length; i++) {
-      String tds = "0";
-      String ph = "0";
-      String hardness = "0";
-      if (TDSControllers[i].text != "") {
-        tds = TDSControllers[i].text;
-      }
-      if (PHControllers[i].text != "") {
-        ph = PHControllers[i].text;
-      }
-      if (HardnessControllers[i].text != "") {
-        hardness = HardnessControllers[i].text;
-      }
-      final response = await http.post(
-        Uri.parse(
-            '${Constants.weblink}GetWaterQualityReportUploadUpdated/$id'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $tokenvalue',
-        },
-        body: jsonEncode(<String, String>{
-          '_method': "PUT",
-          // "date": selectedDate.toString().split(" ")[0],
-          "machine_name_id": listdata[i]["id"].toString(),
-          "tds": tds,
-          "ph": ph,
-          "hardness": hardness
-        }),
-      );
-      if (response.statusCode == 200) {
-          Constants.showtoast("Report Updated!");
-          Utils(context).stopLoading();
-      } else {
-        print(response.statusCode);
-        print(response.body);
-        Utils(context).stopLoading();
-        Constants.showtoast("Error Updating Data.");
-      }
+    String tds = "0";
+    String ph = "0";
+    String hardness = "0";
+    if (TDSControllers[i].text != "") {
+      tds = TDSControllers[i].text;
+    }
+    if (PHControllers[i].text != "") {
+      ph = PHControllers[i].text;
+    }
+    if (HardnessControllers[i].text != "") {
+      hardness = HardnessControllers[i].text;
+    }
+    final response = await http.post(
+      Uri.parse('${Constants.weblink}GetWaterQualityReportUploadUpdated/$id'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $tokenvalue',
+      },
+      body: jsonEncode(<String, String>{
+        '_method': "PUT",
+        // "date": selectedDate.toString().split(" ")[0],
+        "machine_name_id": listdata[i]["id"].toString(),
+        "tds": tds,
+        "ph": ph,
+        "hardness": hardness
+      }),
+    );
+    if (response.statusCode == 200) {
+      Constants.showtoast("Report Updated!");
+      Utils(context).stopLoading();
+    } else {
+      print(response.statusCode);
+      print(response.body);
+      Utils(context).stopLoading();
+      Constants.showtoast("Error Updating Data.");
+    }
     // }
     FetchWaterList();
   }
@@ -357,8 +356,8 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
                                         ),
                                         Container(
                                           height: 30,
-                                          padding:
-                                          const EdgeInsets.only(right: 15.0),
+                                          padding: const EdgeInsets.only(
+                                              right: 15.0),
                                           // width: 100,
                                           child: ElevatedButton(
                                             onPressed: () {
@@ -373,19 +372,20 @@ class _UploadWaterQualityState extends State<UploadWaterQuality>
                                             },
                                             style: ButtonStyle(
                                                 backgroundColor:
-                                                MaterialStateProperty.all<
-                                                    Color>(
-                                                    Constants.primaryColor)),
+                                                    MaterialStateProperty
+                                                        .all<Color>(Constants
+                                                            .primaryColor)),
                                             child: Row(
                                               crossAxisAlignment:
-                                              CrossAxisAlignment.center,
+                                                  CrossAxisAlignment.center,
                                               children: [
                                                 Text(" Sumbit  ",
                                                     style: TextStyle(
                                                         color: Colors.white,
                                                         fontFamily:
-                                                        Constants.popins,
-                                                        fontWeight: FontWeight.bold,
+                                                            Constants.popins,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                         fontSize: 12)),
                                                 // Image.asset(
                                                 //   "assets/icons/Edit.png",

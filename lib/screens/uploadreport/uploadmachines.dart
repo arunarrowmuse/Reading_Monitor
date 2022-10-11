@@ -124,13 +124,13 @@ class _UploadMachinesState extends State<UploadMachines>
                 if (subcatdata[i]['id'] ==
                     uploaddata[j]['sub_categories_id']){
                   emController = TextEditingController(
-                      text: uploaddata[i]['em'].toString());
+                      text: uploaddata[j]['em'].toString());
                   hmController = TextEditingController(
-                      text: uploaddata[i]['hm'].toString());
+                      text: uploaddata[j]['hm'].toString());
                   waterController = TextEditingController(
-                      text: uploaddata[i]['water'].toString());
+                      text: uploaddata[j]['water'].toString());
                   batchController = TextEditingController(
-                      text: uploaddata[i]['batch'].toString());
+                      text: uploaddata[j]['batch'].toString());
                   idController = TextEditingController(
                       text: uploaddata[j]['id'].toString());
                 }
